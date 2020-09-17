@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 	/* Allocate some space for our values, and initialise them with some
 	 * random data
 	 */
-	vals = malloc(sizeof(double) * count);
+	vals = (double*) malloc(sizeof(double) * count);
 	if (!vals)
 		exit(1);
 
