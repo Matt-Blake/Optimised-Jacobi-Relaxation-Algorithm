@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#include <thread>   
+
 // no_thread_sum returns the sum of the values in 'vals', of length 'count'
 static double no_thread_sum(double *vals, size_t count)
 {
