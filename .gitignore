@@ -1,2 +1,5 @@
-Sum
+Sum.out.dSYM/
 sum.dSYM/
+.vscode/
+.DS_Store
+sum.out
