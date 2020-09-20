@@ -1,10 +1,17 @@
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
 
 #include <thread>   
+
+// structure we're going to use for arguments to our thread functions
+struct thread_args {
+	double *vals;
+	size_t count;
+	double ret;
+	std::thread thread;
+};
 
 // no_thread_sum returns the sum of the values in 'vals', of length 'count'
 static double no_thread_sum(double *vals, size_t count)
@@ -15,14 +22,6 @@ static double no_thread_sum(double *vals, size_t count)
 	}
 	return sum;
 }
-
-// structure we're going to use for arguments to our pthread functions
-struct thread_args {
-	double *vals;
-	size_t count;
-	double ret;
-	pthread_t thread;
-};
 
 // return the sum of a single slice of values
 static void *thread_sum_func(void *args)
@@ -62,7 +61,8 @@ static double thread_sum(double *vals, size_t count, int nthreads)
 
 	// Wait for each thread to finish, and add in its partial sum
 	for (int i = 0; i < nthreads; i++) {
-		pthread_join(ta[i].thread, NULL);
+		//pthread_join(ta[i].thread, NULL);
+		ta[i].join();
 		sum += ta[i].ret;
 	}
 	return sum;
