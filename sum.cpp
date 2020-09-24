@@ -72,7 +72,7 @@ static double thread_sum(double *vals, size_t count, int nthreads)
 int main(int argc, char **argv)
 {
 	struct timespec start, end;
-	size_t count = 1000000000;
+	size_t count = 10000;
 	double *vals;
 	double sum;
 	uint64_t nanoseconds;
