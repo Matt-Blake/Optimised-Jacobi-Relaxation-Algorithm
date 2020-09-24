@@ -26,7 +26,7 @@ static double no_thread_sum(double *vals, size_t count)
 // return the sum of a single slice of values
 static void *thread_sum_func(void *args)
 {
-	struct thread_args *ta = (struct thread_args*)args;
+	struct thread_args *ta = (struct thread_args*) args;
 	double sum = 0;
 
 	for (size_t i = 0; i < ta->count; i++) {
