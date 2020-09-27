@@ -19,17 +19,24 @@
 #include <cstdint>
 #include <cinttypes>
 //#include <thread>
-#include <pthread.h>   
+#include <pthread.h>
+#include <iostream>
+#include <fstream>   
 
-#define S_TO_NS 			1000000000ULL 	// Conversion factor from seconds to nanoseconds
-#define MS_TO_NS 			1000000ULL		// Conversion factor from millseconds to nanoseconds
-#define BASE_VALUES_TO_SUM 	10000 			// The number of values to sum if no inputs are given to main
-#define BASE_NUM_THREADS 	4   			// The number of threads to use if no inputs are given to main
-#define COUNT_ARG_POS 		1				// The position of the count argument to main
-#define THREADS_ARG_POS 	2				// The position of the thread argument to main
-#define MAX_VALUE			100				// The values will being summed will be between 0 and (MAX_VALUE - 1)
-#define EXIT_STATUS			1				// The status value returned when the program is exited due to a malloc error
+#define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
+#define MS_TO_NS 			  	  1000000ULL		// Conversion factor from millseconds to nanoseconds
+#define BASE_VALUES_TO_SUM 	  	  10000 			// The number of values to sum if no inputs are given to main
+#define BASE_NUM_THREADS 	  	  10   				// The number of threads to use if no inputs are given to main
+#define COUNT_ARG_POS 		  	  1					// The position of the count argument to main
+#define THREADS_ARG_POS 	  	  2					// The position of the thread argument to main
+#define MAX_VALUE			  	  100				// The values will being summed will be between 0 and (MAX_VALUE - 1)
+#define EXIT_STATUS			  	  1					// The status value returned when the program is exited due to a malloc error
 
+#define OUTPUT_FILEPATH		  	  "../Code outputs/Thread Results.csv"	// The filepath of the .csv to write results to
+#define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
+#define MAX_STRINGS_TO_SAVE   	  100				// The maximum number of strings to be save to 'OUTPUT_FILEPATH' (doesn't include '\0')
+#define THREADED_RESULT_ORDER  	  0					// The order in the .csv where the threaded results string should be saved
+#define NON_THREADED_RESULT_ORDER 1					// The order where the .csv where the non-threaded results string should be saved
 
 /*
  * Structure:    thread_args
@@ -184,23 +191,64 @@ static double* allocateValues(double count)
 	return vals;
 }
 
+
 /*
  * Function:    displayThreadedSumResults
  * ------------------------------
+ * 
+ * // Save a copy of the strings 
+ *
+ * @params:
+ * 		- char** strings_to_write: Pointer to a list of strings
+ * 								   to be written to the .csv.
+ * --------------------- 
+ */
+static void* writeToCSV(char** strings_to_write)
+{
+	size_t numLines;
+	std::ofstream output_file;
+	
+	 // Assign variables
+    output_file.open(OUTPUT_FILEPATH);
+	numLines = sizeof(strings_to_write); // Calculate the number of strings to write
+	
+	// Write strings in strings_to_write to .csv file
+	for(int i = 0; i <= numLines; i++)
+	{
+		output_file << *strings_to_write[i]; // Write string
+		free(strings_to_write[i]); // Free string inside once written
+	}
+
+	// Free memory
+	free(strings_to_write);
+	output_file.close();
+
+	return NULL;
+
+
+}
+
+/*
+ * Function:    getThreadedSumResults
+ * ------------------------------
  * Sums the value of an array using threading. This sum is
- * then displayed along with the time taken to calculate it.
+ * then returned along with the time taken to calculate it
+ * as a string, which can be printed or saved to a file.
  *
  * @params:
  * 		- double* vals: The values to be summed
  *      - size_t count: The number of values to be summed
  *      - int nthreads: The number of threads to use
+ *  * @returns:
+ * 		- char* results_string: String containing the results
  * --------------------- 
  */
-static void* displayThreadedSumResults(double* vals, size_t count, int nthreads)
+static char* getThreadedSumResults(double* vals, size_t count, int nthreads)
 {
 	struct timespec start, end;
 	uint64_t nanoseconds;
 	double sum;
+	char* results_string = (char*) malloc((MAX_STRING_SIZE + 1) * sizeof(char));
 
 	// Calculate the sum of 'vals' and the time taken to perform this sum using threads
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
@@ -208,29 +256,34 @@ static void* displayThreadedSumResults(double* vals, size_t count, int nthreads)
 	clock_gettime(CLOCK_MONOTONIC, &end); // End timer
 	nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
 
-	// Print the results for the threaded methods
-	printf("thread sum: %f (%d threads)\n", sum, nthreads);
-	printf("Took %" PRIu64 " ms for %zu iterations\n", nanoseconds / MS_TO_NS, count);
+	// Print the results
+	printf("thread sum: %f", sum);
+	snprintf(results_string, MAX_STRING_SIZE + 1, "thread sum: %f (%d threads)\nTook %" PRIu64 
+		     " ms for %zu iterations\n", sum, nthreads, nanoseconds / MS_TO_NS, count); // Write sum to a string
 
-	return NULL;
+	return results_string;
 }
 
 /*
- * Function:    displayNonThreadedSumResults
+ * Function:    getNonThreadedSumResults
  * ------------------------------
- * Sums the value of an array without using threading. This sum
- * is then displayed along with the time taken to calculate it.
+ * Sums the value of an array without using threading. This 
+ * sum is then returned along with the time taken to calculate
+ * it as a string, which can be printed or saved to a file.
  *
  * @params:
  * 		- double* vals: The values to be summed
  *      - size_t count: The number of values to be summed
+ * @returns:
+ * 		- char* results_string: String containing the results
  * --------------------- 
  */
-static void* displayNonThreadedSumResults(double* vals, size_t count)
+static char* getNonThreadedSumResults(double* vals, size_t count)
 {
 	struct timespec start, end;
 	uint64_t nanoseconds;
 	double sum;
+	char* results_string = (char*) malloc((MAX_STRING_SIZE + 1) * sizeof(char));
 
 	// Calculate the sum of 'vals' and the time taken to perform this sum without using threads
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
@@ -238,11 +291,11 @@ static void* displayNonThreadedSumResults(double* vals, size_t count)
 	clock_gettime(CLOCK_MONOTONIC, &end); // End timer
 	nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
 
-	// Print the results for the non-threaded methods
-	printf("no thread sum: %f\n", sum);
-	printf("Took %" PRIu64 " ms for %zu iterations\n", nanoseconds / MS_TO_NS, count);
+	// Save results as a string
+	snprintf(results_string, MAX_STRING_SIZE + 1, "no thread sum: %f\nTook %" PRIu64
+	 	     " ms for %zu iterations\n", sum, nanoseconds / MS_TO_NS, count);
 
-	return NULL;
+	return results_string;
 }
 
 
@@ -267,15 +320,15 @@ static void* performSumming(size_t count, int nthreads)
 	double thread_sum;
 	double no_thread_sum;
 	double* vals;
+	char** results = (char**) malloc((MAX_STRINGS_TO_SAVE + 1) * sizeof(char));
 
 	// Allocate random values to be summed
 	vals = allocateValues(count);
 
-	// Calculate the sum of 'vals' with and without using threads
-	displayThreadedSumResults(vals, count, nthreads);
-	displayNonThreadedSumResults(vals, count);
-
-	// Free the dynamically allocated memory used to store values
+	// Calculate and save the sum of 'vals' with and without using threads
+	results[THREADED_RESULT_ORDER] = getThreadedSumResults(vals, count, nthreads);
+	results[NON_THREADED_RESULT_ORDER] = getNonThreadedSumResults(vals, count);
+	writeToCSV(results);
 	free(vals); 
 
 	return NULL;
