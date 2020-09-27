@@ -4,7 +4,6 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"taskName": "build",
 			"label": "C/C++: g++ build active file",
 			"command": "/usr/bin/g++",
 			"args": [

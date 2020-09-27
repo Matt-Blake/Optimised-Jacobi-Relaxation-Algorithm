@@ -1,7 +1,7 @@
 CFLAGS=-g -Wall -pipe -O3
 LFLAGS=-lpthread
 
-sum.out: sum.cpp
+sum: sum.cpp
 	$(CC) -o $@ $< $(CFLAGS) $(LFLAGS)
 
 clean:
