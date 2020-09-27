@@ -36,7 +36,6 @@
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Thread Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A string containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
-#define NUM_THREAD_TO_COMPARE	  12				// The number of threads to compare in .csv output file
 
 
 /*
@@ -259,27 +258,36 @@ static void* getNonThreadedSumResults(double* vals, size_t count)
 
 
 /*
- * Function:    performSumming
+ * Function:    getResults
  * ------------------------------
- * Sums the value of an array.
- * This sum is then displayed along with the time taken to
- * calculate it.
+ * Calculate the time taken to sum 'vals'. These results are
+ * calculated for all number of threads up to 'nthreads' and
+ * without using threads. These results are then printed and
+ * saved to a .csv file.
  *
  * @params:
  * 		- double* vals: The values to be summed
  *      - size_t count: The number of values to be summed
- *      - int nthreads: The number of threads to use
- * 		- std::ofstream* output_file: A pointer to the opened output file
+ * 		- int nthreads: The maximum number of threads to use
  * --------------------- 
  */
-static void* performSumming(double* vals, size_t count, int nthreads, std::ofstream* output_file)
+static void* getResults(double* vals, size_t count, int nthreads)
 {
-	char* threaded_results = (char*) malloc((MAX_STRING_SIZE + 1));
-	char* non_threaded_results = (char*) malloc((MAX_STRING_SIZE + 1));
+	std::ofstream output_file;
 
-	// Calculate and save the sum of 'vals'
-	getThreadedSumResults(vals, count, nthreads, output_file);
-	getNonThreadedSumResults(vals, count);
+	// Initalise file
+	output_file.open(OUTPUT_FILEPATH);
+	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
+
+	// Calculate the results without using threading
+	getNonThreadedSumResults(vals, count); 
+
+	// Calculate the results without using threading
+	for(int i = 1; i <= nthreads; i++) { // Iterate through different numbers of threads
+		getThreadedSumResults(vals, count, i, &output_file);
+	}
+
+	output_file.close();
 
 	return NULL;
 }
@@ -304,9 +312,7 @@ int main(int argc, char** argv)
 {
 	// Initalise variables
 	size_t count = BASE_VALUES_TO_SUM;
-	size_t comparison_count;
 	int nthreads = BASE_NUM_THREADS;
-	std::ofstream output_file;
 	double* vals;
 
 	// Re-initalise variables based on the program's arguments
@@ -320,27 +326,18 @@ int main(int argc, char** argv)
 	// Calculate the sum, then print and save the results
 	//performSumming(count, nthreads); // Determine the sum using a threaded summing routine
 	
-	// Initalise file
-	output_file.open(OUTPUT_FILEPATH);
-	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
 
 	// Calculate a count that is a multiple of all thread numbers
-	//comparison_count = 1;
-	//for(int i = 1; i < NUM_THREAD_TO_COMPARE; i++) {
-	//	comparison_count *= i;
+	//count = 1;
+	//for(int i = 1; i < nthreads; i++) {
+	//	count *= i;
 	//}
-	comparison_count = 479001600;
+	count = 479001600;
 
-	vals = allocateValues(comparison_count); // Allocate random values to be summed
+	vals = allocateValues(count); // Allocate random values to be summed
+	getResults(vals, count, nthreads);
 
-	// Compare the time taken for all thread numbers to calculate the sum
-	for(int i = 1; i <= NUM_THREAD_TO_COMPARE; i++) {
-		performSumming(vals, comparison_count, i, &output_file); 
-	}
-
-	// Free dynamically allocated memory
 	free(vals); 
-	output_file.close();
 
 	return 0;
 }
