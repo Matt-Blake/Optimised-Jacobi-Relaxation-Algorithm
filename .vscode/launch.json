@@ -3,7 +3,7 @@
     "MIMode": "lldb",
     "type": "cppdbg",
     "request": "launch",
-    "program": "${workspaceFolder}/sum.out",
+    "program": "${workspaceFolder}/.out",
     "args": ["arg1", "arg2"],
     "environment": [{ "name": "squid", "value": "clam" }],
     "cwd": "${workspaceFolder}"

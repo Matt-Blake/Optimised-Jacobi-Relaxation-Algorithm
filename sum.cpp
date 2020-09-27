@@ -36,7 +36,7 @@
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Thread Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A string containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
-#define NUM_THREAD_TO_COMPARE	  10				// The number of threads to compare in .csv output file
+#define NUM_THREAD_TO_COMPARE	  12				// The number of threads to compare in .csv output file
 
 
 /*
@@ -281,9 +281,6 @@ static void* performSumming(double* vals, size_t count, int nthreads, std::ofstr
 	getThreadedSumResults(vals, count, nthreads, output_file);
 	getNonThreadedSumResults(vals, count);
 
-	// Free dynamically allocated memory
-	free(vals); 
-
 	return NULL;
 }
 
@@ -319,8 +316,6 @@ int main(int argc, char** argv)
 	if (argc > THREADS_ARG_POS) {
 		nthreads = atoi(argv[THREADS_ARG_POS]);
 	}
-	printf("XD");
-	vals = allocateValues(count); // Allocate random values to be summed
 	
 	// Calculate the sum, then print and save the results
 	//performSumming(count, nthreads); // Determine the sum using a threaded summing routine
@@ -330,16 +325,21 @@ int main(int argc, char** argv)
 	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
 
 	// Calculate a count that is a multiple of all thread numbers
-	comparison_count = 1;
-	for(int i = 0; i < NUM_THREAD_TO_COMPARE; i++) {
-		comparison_count *= i;
-	}
+	//comparison_count = 1;
+	//for(int i = 1; i < NUM_THREAD_TO_COMPARE; i++) {
+	//	comparison_count *= i;
+	//}
+	comparison_count = 479001600;
+
+	vals = allocateValues(comparison_count); // Allocate random values to be summed
 
 	// Compare the time taken for all thread numbers to calculate the sum
-	for(int i = 0; i < NUM_THREAD_TO_COMPARE; i++) {
+	for(int i = 1; i <= NUM_THREAD_TO_COMPARE; i++) {
 		performSumming(vals, comparison_count, i, &output_file); 
 	}
 
+	// Free dynamically allocated memory
+	free(vals); 
 	output_file.close();
 
 	return 0;
