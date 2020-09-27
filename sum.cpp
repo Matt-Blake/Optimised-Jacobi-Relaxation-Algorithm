@@ -42,15 +42,15 @@
  *      - double* vals: A pointer to the values to be summed
  *      - size_t count: The number of values to be summed
  *      - double thread_sum: The sum of values in 'vals' 
- *      - std::thread thread: The thread used to sum values
+ *      - std::thread thread: A pointer to the thread used to sum values
  * ---------------------
  */
-typedef struct thread_args
+struct thread_args
 {
 	double* vals;			  
 	size_t count;			   
 	double thread_sum;
-	std::thread thread;
+	std::thread* thread;
 };
 
 
@@ -134,17 +134,18 @@ static double sumValues(double* vals, size_t count, int nthreads)
 
 	// Split up the values in 'vals' equally and iteratively spawn the threads
 	for (int i = 0; i < nthreads; i++) {
-
-		// Initalise thread_arg_t structure
+		
+		// Initalise thread_arg structure
 		thread_arg[i].count = count / nthreads;
 		thread_arg[i].vals = &vals[i * count / nthreads];
 		thread_arg[i].thread_sum = 0;
-		thread_arg[i].thread = thread();
+		std::thread new_thread(std::ref(threadSum)); // Create new thread running 
+		thread_arg[i].thread = &new_thread;
 	}
 
 	// Wait for each thread to finish, then add in its partial sum to the total sum
 	for (int i = 0; i < nthreads; i++) {
-		thread_arg[i].thread.join();
+		(thread_arg[i].thread)->join();
 		sum += thread_arg[i].thread_sum;
 	}
 
