@@ -36,7 +36,7 @@
 #define OVERWRITE_VALUES		  true				// If the input number of summed values should be overwritten and divisable by the number of threads
 
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Thread Results.csv"	// The filepath of the .csv to write results to
-#define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A string containing the header text for the .csv results file
+#define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 
 
@@ -136,7 +136,7 @@ void* sum_args::allocateValues(void)
  *      - double* vals: A pointer to the values to be summed
  *      - size_t count: The number of values to be summed
  *      - double thread_sum: The sum of values in 'vals' 
- *      - std::thread::id thread_ID: The thread ID used
+ *      - std::thread* thread: A pointer to the thread used
  * ---------------------
  */
 struct thread_args
@@ -144,7 +144,7 @@ struct thread_args
 	double* vals;			  
 	size_t count;			   
 	double thread_sum;
-	//std::thread::id thread_ID;
+	//std::thread* thread;
 	pthread_t thread;
 };
 
@@ -212,13 +212,12 @@ static void* getNonThreadedSumResults(sum_args* sum_arguments)
  * thread_sum_func uses a thread to sum the the sum of the values. 
  *
  * @params:
- *      - void* args: A pointer to the arguments needed to initalise
- * 					  a thread_args struct
+ *      - thread_args* thread_arguments: A pointer to the arguments needed
+ *  								     to initalise a thread_args struct
  * ---------------------
  */
-static void* threadSum(void* args)
+static void* threadSum(thread_args* thread_arguments)
 {
-	struct thread_args* thread_arguments = (struct thread_args*) args;
 	double sum = 0;
 
 	// Iterate through the values in 'thread_arg->vals' summing them
@@ -259,21 +258,19 @@ static double sumValues(sum_args* sum_arguments, int nthreads)
 
 	// Split up the values in 'vals' equally and iteratively spawn the threads
 	for (int i = 0; i < nthreads; i++) {
-		
-		// Create thread running threadSum
-		//std::thread new_thread(std::ref(threadSum));
 
 		// Initalise thread_arg structure
 		thread_arg[i].count = (sum_arguments->count) / nthreads;
 		thread_arg[i].vals = &(sum_arguments->vals[i * (sum_arguments->count) / nthreads]);
 		thread_arg[i].thread_sum = 0;
-		//thread_arg[i].thread_ID = new_thread.get_id();
+		//std::thread summing_thread(threadSum, std::ref(&thread_arg[i]));
+		//thread_arg[i].thread = &summing_thread;
 		pthread_create(&thread_arg[i].thread, NULL, threadSum, &thread_arg[i]);
 	}
 
 	// Wait for each thread to finish, then add in its partial sum to the total sum
 	for (int i = 0; i < nthreads; i++) {
-		//thread_arg[i].thread_ID.join();
+		//thread_arg[i].thread->join();
 		pthread_join(thread_arg[i].thread, NULL);
 		sum += thread_arg[i].thread_sum;
 	}
