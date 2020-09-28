@@ -26,17 +26,102 @@
 
 #define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
 #define MS_TO_NS 			  	  1000000ULL		// Conversion factor from millseconds to nanoseconds
-#define BASE_VALUES_TO_SUM 	  	  10000 			// The number of values to sum if no inputs are given to main
-#define BASE_NUM_THREADS 	  	  10   				// The number of threads to use if no inputs are given to main
+#define EXIT_STATUS			  	  1					// The status value returned when the program is exited due to a malloc error
 #define COUNT_ARG_POS 		  	  1					// The position of the count argument to main
 #define THREADS_ARG_POS 	  	  2					// The position of the thread argument to main
+
+#define BASE_VALUES_TO_SUM 	  	  10000 			// The number of values to sum if no inputs are given to main
+#define BASE_NUM_THREADS 	  	  10   				// The number of threads to use if no inputs are given to main
 #define MAX_VALUE			  	  100				// The values will being summed will be between 0 and (MAX_VALUE - 1)
-#define EXIT_STATUS			  	  1					// The status value returned when the program is exited due to a malloc error
+#define OVERWRITE_VALUES		  true				// If the input number of summed values should be overwritten and divisable by the number of threads
 
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Thread Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A string containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 
+
+/*
+ * Class:    sum_args
+ * ------------------------------
+ * Defines stucture to contain the information needed
+ * for summation results.
+ * 
+ * @members:
+ *  	- int nthreads: The maximum number of threads to use
+ *      - double* vals: A pointer to the values to be summed
+ *      - size_t count: The number of values to be summed
+ * @methods:
+ * 		- allocateValues: Fills 'vals' with random values
+ * 		- calcNumValues: Calculates the number of values to
+ * 						 be summed
+ * ---------------------
+ */
+class sum_args
+{
+	public:
+		double* vals;			  
+		size_t count;
+		double nthreads;
+		void* allocateValues(void);
+	private:
+		void* calcNumValues(void);
+};
+
+/*
+ * Function:    calcNumValues
+ * ------------------------------
+ * Calculates the minimum number of values that allow
+ * the summed values can be divided equally by all of
+ * the numbers of threads being compared.
+ *
+ * @updates:
+ *      - size_t count: The number of values to be created
+ * --------------------- 
+ */
+void* sum_args::calcNumValues(void)
+{
+	// Calculate a count that is a multiple of all thread numbers
+	size_t count = 1;
+	//for(int i = 1; i < sum_args.nthreads; i++) {
+	//	count *= i;
+	//}
+
+	count = 479001600;
+
+	return NULL;
+}
+
+/*
+ * Function:    allocateValues
+ * ------------------------------
+ * Dynamically allocates 'count' random values to an array.
+ *
+ * @params:
+ *      - int nthreads: The maximum number of threads to use
+ * @updates:
+ *      - double* vals: A pointer to the allocated values
+ * --------------------- 
+ */
+void* sum_args::allocateValues(void)
+{
+	double* values;
+	
+	// If the user inputted value needs to be divsabled by nthreads
+	if (OVERWRITE_VALUES) {
+		calcNumValues();
+	}
+
+	values = (double*) malloc(sizeof(double) * count); // Dynamically allocate space
+	if (!values) // Exit if no space could be dynamically allocated
+		exit(1);
+	for (size_t i = 0; i < count; i++) { // Assign a random value to each 
+		values[i] = rand() % MAX_VALUE;
+	}
+
+	vals = values;
+
+	return NULL;
+}
 
 /*
  * Structure:    thread_args
@@ -45,16 +130,16 @@
  * for arguments to the sum.cpp thread functions.
  * 
  * @members:
- *      - double* vals: A pointer to the values to be summed
- *      - size_t count: The number of values to be summed
- *      - double thread_sum: The sum of values in 'vals' 
+ *      - sum_args* sum_arguments: A structure containing the
+ * 								   the values and number of 
+ * 								   values to be summed
+ *      - double thread_sum: The sum of values
  *      - std::thread::id thread_ID: The thread ID used
  * ---------------------
  */
 struct thread_args
 {
-	double* vals;			  
-	size_t count;			   
+	sum_args* sum_arguments;	   
 	double thread_sum;
 	//std::thread::id thread_ID;
 	pthread_t thread;
@@ -69,22 +154,52 @@ struct thread_args
  * threaded methods.
  *
  * @params:
- *      - double* vals: A pointer to the values to be summed
- *      - size_t count: The number of values to be summed
+ *      - sum_args sum_arguments: Contains the information
+ * 								  needs for the current sum.
  * @return:
  *      - double sum: The sum of the values in 'vals'
  * ---------------------
  */
-static double noThreadSum(double* vals, size_t count)
+static double noThreadSum(sum_args* sum_arguments)
 {
 	double sum = 0;
 
 	// Iterate through the values in 'vals' summing them
-	for (size_t i = 0; i < count; i++) {
-		sum += vals[i];
+	for (size_t i = 0; i < sum_arguments->count; i++) {
+		sum += sum_arguments->vals[i];
 	}
 
 	return sum;
+}
+
+
+/*
+ * Function:    getNonThreadedSumResults
+ * ------------------------------
+ * Sums the value of an array without using threading. This 
+ * sum is then printed.
+ *
+ * @params:
+ * 		- sum_args sum_arguments: Contains the information
+ * 								  needs for the current sum.
+ * --------------------- 
+ */
+static void* getNonThreadedSumResults(sum_args* sum_arguments)
+{
+	struct timespec start, end;
+	uint64_t nanoseconds;
+	double sum;
+
+	// Calculate the sum of 'vals' and the time taken to perform this sum without using threads
+	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
+	sum = noThreadSum(sum_arguments);
+	clock_gettime(CLOCK_MONOTONIC, &end); // End timer
+	nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+
+	// Print results
+	printf("no thread sum: %f\nTook %" PRIu64 " ms for %zu iterations\n", sum, nanoseconds / MS_TO_NS, sum_arguments->count); // Print to terminal
+
+	return NULL;
 }
 
 
@@ -100,14 +215,14 @@ static double noThreadSum(double* vals, size_t count)
  */
 static void* threadSum(void* args)
 {
-	struct thread_args* thread_arg = (struct thread_args*) args;
+	struct thread_args* thread_arguments = (struct thread_args*) args;
 	double sum = 0;
 
 	// Iterate through the values in 'thread_arg->vals' summing them
-	for (size_t i = 0; i < thread_arg->count; i++) {
-		sum += thread_arg->vals[i];
+	for (size_t i = 0; i < thread_arguments->sum_arguments->count; i++) {
+		sum += thread_arguments->sum_arguments->vals[i];
 	}
-	thread_arg->thread_sum = sum; // Store the sum in the thread structure
+	thread_arguments->thread_sum = sum; // Store the sum in the thread structure
 
 	return NULL;
 }
@@ -121,21 +236,21 @@ static void* threadSum(void* args)
  * each thread sums an equal number of values.
  *
  * @params:
- *      - double* vals: A pointer to the values to be summed
- *      - size_t count: The number of values to be summed
+ *      - sum_args sum_arguments: Contains the information
+ * 								  needs for the current sum.
  *      - int nthreads: The number of threads to use
  * @return:
- *      - double sum: The sum of values in 'vals' 
+ *      - double sum: The sum of values
  * --------------------- 
  */
-static double sumValues(double* vals, size_t count, int nthreads)
+static double sumValues(sum_args* sum_arguments, int nthreads)
 {
 	struct thread_args thread_arg[nthreads];
 	double sum = 0;
 
 	// Print error and exit the number of values can not be split equally amongst the threads
-	if (count % nthreads) {
-		fprintf(stderr, "count %zu must be divisible by %d\n", count, nthreads);
+	if (sum_arguments->count % nthreads) {
+		fprintf(stderr, "count %zu must be divisible by %d\n", sum_arguments->count, nthreads);
 		return 0;
 	}
 
@@ -146,8 +261,8 @@ static double sumValues(double* vals, size_t count, int nthreads)
 		//std::thread new_thread(std::ref(threadSum));
 
 		// Initalise thread_arg structure
-		thread_arg[i].count = count / nthreads;
-		thread_arg[i].vals = &vals[i * count / nthreads];
+		thread_arg[nthreads].sum_arguments = sum_arguments;
+		thread_arg[i].sum_arguments->vals = &sum_arguments->vals[i * sum_arguments->count / nthreads];
 		thread_arg[i].thread_sum = 0;
 		//thread_arg[i].thread_ID = new_thread.get_id();
 		pthread_create(&thread_arg[i].thread, NULL, threadSum, &thread_arg[i]);
@@ -165,47 +280,19 @@ static double sumValues(double* vals, size_t count, int nthreads)
 
 
 /*
- * Function:    allocateValues
- * ------------------------------
- * Dynamically allocates 'count' random values to an array.
- *
- * @params:
- *      - size_t count: The number of values to be created
- *      - int nthreads: The number of threads to use
- * 		- bool using_threading: If threading is used
- *  * @return:
- *      - double* vals: A pointer to the allocated values
- * --------------------- 
- */
-static double* allocateValues(double count)
-{
-	double* vals;
-	
-	vals = (double*) malloc(sizeof(double) * count); // Dynamically allocate space
-	if (!vals) // Exit if no space could be dynamically allocated
-		exit(1);
-	for (size_t i = 0; i < count; i++) { // Assign a random value to each 
-		vals[i] = rand() % MAX_VALUE;
-	}
-
-	return vals;
-}
-
-
-/*
  * Function:    getThreadedSumResults
  * ------------------------------
  * Sums the value of an array using threading. The results
  * are then saved to a .csv file and printed to the terminal.
  *
  * @params:
- * 		- double* vals: The values to be summed
- *      - size_t count: The number of values to be summed
+ * 		- sum_args sum_arguments: Contains the information
+ * 								  needs for the current sum.
  *      - int nthreads: The number of threads to use
  * 		- std::ofstream* output_file: A pointer to the opened output file
  * --------------------- 
  */
-static char* getThreadedSumResults(double* vals, size_t count, int nthreads, std::ofstream* output_file)
+static char* getThreadedSumResults(sum_args* sum_arguments, int nthreads, std::ofstream* output_file)
 {
 	struct timespec start, end;
 	uint64_t nanoseconds;
@@ -214,44 +301,15 @@ static char* getThreadedSumResults(double* vals, size_t count, int nthreads, std
 	
 	// Calculate the sum of 'vals' and the time taken to perform this sum using threads
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
-	sum = sumValues(vals, count, nthreads);
+	sum = sumValues(sum_arguments, nthreads);
 	clock_gettime(CLOCK_MONOTONIC, &end); // End timer
 	nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
 
 	// Print the results
 	sprintf(results_string, "%d,%llu\n", nthreads, nanoseconds/MS_TO_NS);  // Save .csv results in a string
 	*output_file << results_string; // Write results to .csv file
-	printf("thread sum: %f (%d threads)\nTook %" PRIu64 " ms for %zu iterations\n", sum, nthreads, nanoseconds / MS_TO_NS, count); // Print to terminal
-
-	return NULL;
-}
-
-
-/*
- * Function:    getNonThreadedSumResults
- * ------------------------------
- * Sums the value of an array without using threading. This 
- * sum is then printed.
- *
- * @params:
- * 		- double* vals: The values to be summed
- *      - size_t count: The number of values to be summed
- * --------------------- 
- */
-static void* getNonThreadedSumResults(double* vals, size_t count)
-{
-	struct timespec start, end;
-	uint64_t nanoseconds;
-	double sum;
-
-	// Calculate the sum of 'vals' and the time taken to perform this sum without using threads
-	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
-	sum = noThreadSum(vals, count);
-	clock_gettime(CLOCK_MONOTONIC, &end); // End timer
-	nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-
-	// Print results
-	printf("no thread sum: %f\nTook %" PRIu64 " ms for %zu iterations\n", sum, nanoseconds / MS_TO_NS, count); // Print to terminal
+	printf("thread sum: %f (%d threads)\nTook %" PRIu64 " ms for %zu iterations\n",
+	        sum, nthreads, nanoseconds / MS_TO_NS, sum_arguments->count); // Print to terminal
 
 	return NULL;
 }
@@ -260,18 +318,17 @@ static void* getNonThreadedSumResults(double* vals, size_t count)
 /*
  * Function:    getResults
  * ------------------------------
- * Calculate the time taken to sum 'vals'. These results are
- * calculated for all number of threads up to 'nthreads' and
- * without using threads. These results are then printed and
- * saved to a .csv file.
+ * Calculate the time taken to sum summation's arguments 
+ * random values. These results are calculated for all number
+ * of threads up to 'nthreads' and without using threads. 
+ * These results are then printed and saved to a .csv file.
  *
  * @params:
- * 		- double* vals: The values to be summed
- *      - size_t count: The number of values to be summed
- * 		- int nthreads: The maximum number of threads to use
+ * 		- sum_args sum_arguments: Contains the information
+ * 								  needs for the current sum.
  * --------------------- 
  */
-static void* getResults(double* vals, size_t count, int nthreads)
+static void* getResults(sum_args* sum_arguments)
 {
 	std::ofstream output_file;
 
@@ -280,11 +337,11 @@ static void* getResults(double* vals, size_t count, int nthreads)
 	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
 
 	// Calculate the results without using threading
-	getNonThreadedSumResults(vals, count); 
+	getNonThreadedSumResults(sum_arguments); 
 
 	// Calculate the results without using threading
-	for(int i = 1; i <= nthreads; i++) { // Iterate through different numbers of threads
-		getThreadedSumResults(vals, count, i, &output_file);
+	for(int i = 1; i <= sum_arguments->nthreads; i++) { // Iterate through different numbers of threads
+		getThreadedSumResults(sum_arguments, i, &output_file);
 	}
 
 	output_file.close();
@@ -314,28 +371,20 @@ int main(int argc, char** argv)
 	size_t count = BASE_VALUES_TO_SUM;
 	int nthreads = BASE_NUM_THREADS;
 	double* vals;
+	sum_args* sum_arguments;
 
 	// Re-initalise variables based on the program's arguments
 	if (argc > COUNT_ARG_POS) {
-		count = atoll(argv[COUNT_ARG_POS]);
+		sum_arguments->count = atoll(argv[COUNT_ARG_POS]);
 	}
 	if (argc > THREADS_ARG_POS) {
-		nthreads = atoi(argv[THREADS_ARG_POS]);
+		sum_arguments->nthreads = atoi(argv[THREADS_ARG_POS]);
 	}
 	
-	// Calculate the sum, then print and save the results
-	//performSumming(count, nthreads); // Determine the sum using a threaded summing routine
-	
-
-	// Calculate a count that is a multiple of all thread numbers
-	//count = 1;
-	//for(int i = 1; i < nthreads; i++) {
-	//	count *= i;
-	//}
-	count = 479001600;
-
-	vals = allocateValues(count); // Allocate random values to be summed
-	getResults(vals, count, nthreads);
+	// Calculate results
+	sum_arguments->allocateValues(); // Allocate the values to sum
+	//vals = getValues(nthreads); // Allocate the values to sum
+	getResults(sum_arguments); // Sum values and store the results
 
 	free(vals); 
 
