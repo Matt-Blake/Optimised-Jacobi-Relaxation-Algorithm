@@ -67,6 +67,7 @@ class sum_args
 		void* calcNumValues(void);
 };
 
+
 /*
  * Function:    calcNumValues
  * ------------------------------
@@ -90,6 +91,7 @@ void* sum_args::calcNumValues(void)
 
 	return NULL;
 }
+
 
 /*
  * Function:    allocateValues
@@ -123,6 +125,7 @@ void* sum_args::allocateValues(void)
 	return NULL;
 }
 
+
 /*
  * Structure:    thread_args
  * ------------------------------
@@ -130,16 +133,16 @@ void* sum_args::allocateValues(void)
  * for arguments to the sum.cpp thread functions.
  * 
  * @members:
- *      - sum_args* sum_arguments: A structure containing the
- * 								   the values and number of 
- * 								   values to be summed
- *      - double thread_sum: The sum of values
+ *      - double* vals: A pointer to the values to be summed
+ *      - size_t count: The number of values to be summed
+ *      - double thread_sum: The sum of values in 'vals' 
  *      - std::thread::id thread_ID: The thread ID used
  * ---------------------
  */
 struct thread_args
 {
-	sum_args* sum_arguments;	   
+	double* vals;			  
+	size_t count;			   
 	double thread_sum;
 	//std::thread::id thread_ID;
 	pthread_t thread;
@@ -219,8 +222,8 @@ static void* threadSum(void* args)
 	double sum = 0;
 
 	// Iterate through the values in 'thread_arg->vals' summing them
-	for (size_t i = 0; i < thread_arguments->sum_arguments->count; i++) {
-		sum += thread_arguments->sum_arguments->vals[i];
+	for (size_t i = 0; i < thread_arguments->count; i++) {
+		sum += thread_arguments->vals[i];
 	}
 	thread_arguments->thread_sum = sum; // Store the sum in the thread structure
 
@@ -261,8 +264,8 @@ static double sumValues(sum_args* sum_arguments, int nthreads)
 		//std::thread new_thread(std::ref(threadSum));
 
 		// Initalise thread_arg structure
-		thread_arg[nthreads].sum_arguments = sum_arguments;
-		thread_arg[i].sum_arguments->vals = &sum_arguments->vals[i * sum_arguments->count / nthreads];
+		thread_arg[i].count = (sum_arguments->count) / nthreads;
+		thread_arg[i].vals = &(sum_arguments->vals[i * (sum_arguments->count) / nthreads]);
 		thread_arg[i].thread_sum = 0;
 		//thread_arg[i].thread_ID = new_thread.get_id();
 		pthread_create(&thread_arg[i].thread, NULL, threadSum, &thread_arg[i]);
@@ -274,6 +277,7 @@ static double sumValues(sum_args* sum_arguments, int nthreads)
 		pthread_join(thread_arg[i].thread, NULL);
 		sum += thread_arg[i].thread_sum;
 	}
+
 
 	return sum;
 }
@@ -371,20 +375,19 @@ int main(int argc, char** argv)
 	size_t count = BASE_VALUES_TO_SUM;
 	int nthreads = BASE_NUM_THREADS;
 	double* vals;
-	sum_args* sum_arguments;
+	sum_args sum_arguments;
 
 	// Re-initalise variables based on the program's arguments
 	if (argc > COUNT_ARG_POS) {
-		sum_arguments->count = atoll(argv[COUNT_ARG_POS]);
+		sum_arguments.count = atoll(argv[COUNT_ARG_POS]);
 	}
 	if (argc > THREADS_ARG_POS) {
-		sum_arguments->nthreads = atoi(argv[THREADS_ARG_POS]);
+		sum_arguments.nthreads = atoi(argv[THREADS_ARG_POS]);
 	}
 	
 	// Calculate results
-	sum_arguments->allocateValues(); // Allocate the values to sum
-	//vals = getValues(nthreads); // Allocate the values to sum
-	getResults(sum_arguments); // Sum values and store the results
+	sum_arguments.allocateValues(); // Allocate the values to sum
+	getResults(&sum_arguments); // Sum values and store the results
 
 	free(vals); 
 
