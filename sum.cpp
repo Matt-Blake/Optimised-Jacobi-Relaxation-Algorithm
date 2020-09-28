@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cinttypes>
-//#include <thread>
+#include <thread>
 #include <pthread.h>
 #include <iostream>
 #include <fstream>   
@@ -144,8 +144,7 @@ struct thread_args
 	double* vals;			  
 	size_t count;			   
 	double thread_sum;
-	//std::thread* thread;
-	pthread_t thread;
+	std::thread* thread;
 };
 
 
@@ -216,17 +215,15 @@ static void* getNonThreadedSumResults(sum_args* sum_arguments)
  *  								     to initalise a thread_args struct
  * ---------------------
  */
-static void* threadSum(thread_args* thread_arguments)
+static void threadSum(void)//thread_args* thread_arguments)
 {
-	double sum = 0;
+	//double sum = 0;
 
 	// Iterate through the values in 'thread_arg->vals' summing them
-	for (size_t i = 0; i < thread_arguments->count; i++) {
-		sum += thread_arguments->vals[i];
-	}
-	thread_arguments->thread_sum = sum; // Store the sum in the thread structure
-
-	return NULL;
+	//for (size_t i = 0; i < thread_arguments->count; i++) {
+	//	sum += thread_arguments->vals[i];
+	//}
+	//thread_arguments->thread_sum = sum; // Store the sum in the thread structure
 }
 
 
@@ -263,16 +260,15 @@ static double sumValues(sum_args* sum_arguments, int nthreads)
 		thread_arg[i].count = (sum_arguments->count) / nthreads;
 		thread_arg[i].vals = &(sum_arguments->vals[i * (sum_arguments->count) / nthreads]);
 		thread_arg[i].thread_sum = 0;
-		//std::thread summing_thread(threadSum, std::ref(&thread_arg[i]));
+		std::thread summing_thread(threadSum);//, &thread_arg[i]); // ERROR OCCOURING HERE
 		//thread_arg[i].thread = &summing_thread;
-		pthread_create(&thread_arg[i].thread, NULL, threadSum, &thread_arg[i]);
 	}
 
 	// Wait for each thread to finish, then add in its partial sum to the total sum
 	for (int i = 0; i < nthreads; i++) {
 		//thread_arg[i].thread->join();
-		pthread_join(thread_arg[i].thread, NULL);
-		sum += thread_arg[i].thread_sum;
+		//delete thread_arg[i].thread;
+		//sum += thread_arg[i].thread_sum;
 	}
 
 
