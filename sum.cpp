@@ -82,12 +82,10 @@ class sum_args
 void* sum_args::calcNumValues(void)
 {
 	// Calculate a count that is a multiple of all thread numbers
-	size_t count = 1;
-	//for(int i = 1; i < sum_args.nthreads; i++) {
-	//	count *= i;
-	//}
-
-	count = 479001600;
+	count = 1;
+	for(int i = 1; i <= nthreads; i++) {
+		count *= i;
+	}
 
 	return NULL;
 }
@@ -112,16 +110,18 @@ void* sum_args::allocateValues(void)
 	if (OVERWRITE_VALUES) {
 		calcNumValues();
 	}
-
-	values = (double*) malloc(sizeof(double) * count); // Dynamically allocate space
+	
+	// Dynamically allocate space for values
+	values = (double*) malloc(sizeof(double) * count); 
 	if (!values) // Exit if no space could be dynamically allocated
 		exit(1);
-	for (size_t i = 0; i < count; i++) { // Assign a random value to each 
+
+	// Assign a random value to each value
+	for (size_t i = 0; i < count; i++) { 
 		values[i] = rand() % MAX_VALUE;
 	}
-
 	vals = values;
-
+	
 	return NULL;
 }
 
