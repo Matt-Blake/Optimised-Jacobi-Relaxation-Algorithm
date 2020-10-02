@@ -1,6 +1,5 @@
 {
 	"version": "2.0.0",
-	"miDebuggerPath": "/usr/local/bin/GDB",
 	"tasks": [
 		{
 			"type": "shell",
@@ -9,12 +8,11 @@
 			"args": [
 				"-g",
 				"${file}",
-				"-std=c++17",
 				"-o",
-				"${fileDirname}/${fileBasenameNoExtension}.out"
+				"${fileDirname}/${fileBasenameNoExtension}"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}"
+				"cwd": "${workspaceFolder}.out"
 			},
 			"problemMatcher": [
 				"$gcc"
