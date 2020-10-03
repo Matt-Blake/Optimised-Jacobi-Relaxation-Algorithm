@@ -1,10 +1,11 @@
 /* ****************************************************************
- * poisson_test.cpp
+ * main.cpp
  *
  * Part of ENCE464 Assignment 2
- * This program attemps to find the potential in a 3-D cube, for a
- * given charge distribution. This is solved through Poisson's
- * equation using Jacobi relaxation. 
+ * Main function of Algorithim Optimisation program. This program
+ * attemps to find the potential in a 3-D cube, for a given charge
+ * distribution. This is solved through Poisson's equation using
+ * Jacobi relaxation. 
  *
  * Based off poisson_test.cpp - Michael Hayes, UC ECE
  * 
@@ -52,8 +53,8 @@ typedef class poisson_args
         unsigned int x_size;
         unsigned int y_size;
         unsigned int z_size;    
-        double delta = VOXEL_SPACING;
-        double V_bound = V_BOUND;
+        double delta;
+        double V_bound;
         double* source;
         double* potential;
         void* initPoissonArgs(int, char**);
@@ -158,8 +159,9 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 /*
  * Function:    main
  * ------------------------------
- * The main function of poisson_test.cpp. This function solves Poisson's
- * equation using Jacobi relaxation for a user defined rectangular box.
+ * The main function of Algorithim Optimisation program. This function
+ * runs the program which solves Poisson's equation using Jacobi
+ * relaxation for a user defined rectangular box.
  *
  * @params:
  *      - int argc: The number of arguments passed into main

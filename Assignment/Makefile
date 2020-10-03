@@ -1,7 +1,7 @@
-all: poisson_test
+all: main
 
-poisson_test: poisson_test.cpp poisson.cpp
+poisson_test: main.cpp poisson.cpp
 	g++ -O3 -std=c++11 -Wall -g3 -o $@ $^
 
 clean:
-	rm poisson_test
+	rm main
