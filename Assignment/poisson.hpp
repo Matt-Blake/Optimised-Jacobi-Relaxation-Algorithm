@@ -5,9 +5,9 @@
 
 // Solve Poisson's equation for a rectangular box with Dirichlet
 // boundary conditions on each face.
-void poisson_dirichlet (double *__restrict__ source,
+void poissonDirichlet (double *__restrict__ source,
                         double *__restrict__ potential,
-                        double Vbound,
-                        unsigned int xsize, unsigned int ysize, unsigned int zsize,
-                        double delta, unsigned int maxiters, unsigned int numcores);
+                        double V_bound,
+                        unsigned int x_size, unsigned int y_size, unsigned int z_size,
+                        double delta, unsigned int max_iters, unsigned int num_cores);
 #endif /* POISSON_H */
