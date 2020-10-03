@@ -20,10 +20,11 @@
 #include <ctime>
 #include <iostream>
 #include <fstream>
+#include <list>
 #include "poisson.hpp"
 
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Poisson Results.csv"	// The filepath of the .csv to write results to
-#define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A str//ing containing the header text for the .csv results file
+#define CSV_HEADER_STRING		  "Size,Iterations,Time Taken (ns)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 #define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
 
@@ -76,6 +77,7 @@ void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
 	std::string size_string;
 	std::string iterations_string;
 	std::string time_string;
+	std::string result_string;
 
 	// Convert results to strings
 	size_string = std::to_string(poisson_args->x_size);
@@ -83,7 +85,7 @@ void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
 	time_string = std::to_string(nanoseconds);
 
 	// Save result
-	std::cout << size_string + ',' + iterations_string + ',' + time_string + '\n';
+	result_string = size_string + ',' + iterations_string + ',' + time_string + '\n';
 	//saveResultsToCSV(results);
 
 	return NULL;
