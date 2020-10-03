@@ -11,13 +11,13 @@
 /// \param ysize is the number of elements in the y-direction
 /// \param zsize is the number of elements in the z-direction
 /// \param delta is the voxel spacing in all directions
-/// \param numiters is the number of iterations to perform
-/// \param numcores is the number of CPU cores to use.  If 0, an optimal number is chosen
+/// \param num_iters is the number of iterations to perform
+/// \param num_cores is the number of CPU cores to use.  If 0, an optimal number is chosen
 void poisson_dirichlet (double * __restrict__ source,
                         double * __restrict__ potential,
                         double Vbound,
                         unsigned int xsize, unsigned int ysize, unsigned int zsize, double delta,
-                        unsigned int numiters, unsigned int numcores)
+                        unsigned int num_iters, unsigned int num_cores)
 {
     // source[i, j, k] is accessed with source[((k * ysize) + j) * xsize + i]
     // potential[i, j, k] is accessed with potential[((k * ysize) + j) * xsize + i]    
@@ -28,7 +28,7 @@ void poisson_dirichlet (double * __restrict__ source,
 		return;
 	}
 	memcpy(input, source, size);
-	for (unsigned int iter = 0; iter < numiters; iter++) {
+	for (unsigned int iter = 0; iter < num_iters; iter++) {
 		for (unsigned int x = 0; x < xsize; x++) {
 			for (unsigned int z = 0; z < zsize; z++) {
 				for (unsigned int y = 0; y < ysize; y++) {
@@ -59,7 +59,7 @@ void poisson_dirichlet (double * __restrict__ source,
 					if (z > 0)
 						res += input[(((z - 1) * ysize) + y) * xsize + x];
 					else
-						res += Vbound;
+						res += Vbound; 
 
 					res -= delta * delta * source[((z * ysize) + y) * xsize + x];
 

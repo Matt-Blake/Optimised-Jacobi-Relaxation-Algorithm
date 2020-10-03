@@ -13,10 +13,12 @@
  *
  * ***************************************************************/
 
-
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+
+
 
 /**
  * Sum a matrix of numbers with linear memory access
@@ -33,6 +35,8 @@ int iterate_good(int *buffer, size_t x_max, size_t y_max)
 	return sum;
 }
 
+
+
 /**
  * Sum a matrix of numbers with non-linear memory access
  */
@@ -47,6 +51,8 @@ int iterate_bad(int *buffer, size_t x_max, size_t y_max)
 	}
 	return sum;
 }
+
+
 
 /*
  * Function:    main
@@ -69,14 +75,18 @@ int main(int argc, char **argv)
 	size_t y_max = 5000;
 	int* buffer = (int *) calloc(x_max * y_max, sizeof(int));
 	int good = 0;
+	int sum;
 
 	if (argc >= 2) {
 		good = strcmp(argv[1], "good") == 0;
 	}
-	if (good)
-		iterate_good(buffer, x_max, y_max);
-	else
-		iterate_bad(buffer, x_max, y_max);
+	if (good) { // Calculate sum of buffer using linear methods
+		sum = iterate_good(buffer, x_max, y_max);
+	} else {  // Calculate sum of buffer using non-linear methods
+		sum = iterate_bad(buffer, x_max, y_max);
+	}
+
+	std::cout << sum << '\n'; // Print the sum to the terminal
 
 	return 0;
 }
