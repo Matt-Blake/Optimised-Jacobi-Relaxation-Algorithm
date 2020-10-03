@@ -36,7 +36,7 @@
  *                     specifying the number of CPU cores to use.         
  * ---------------------
  */
-int main (int argc, char* argv[])
+int main(int argc, char* argv[])
 {
     poisson_args_t poisson_user_args;
     poisson_args_t* poisson_args_pointer;
@@ -46,5 +46,5 @@ int main (int argc, char* argv[])
     poisson_args_pointer->initPoissonArgs(argc, argv); // Initalise arguments for solving
     poisson_args_pointer->poissonDirichlet(); // Solve Poisson's equation based on arguments
     
-    return 0;
+    return EXIT_SUCCESS;
 }

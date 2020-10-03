@@ -15,9 +15,9 @@
  * Last modified: 03/10/2020
  * ***************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "poisson.hpp"
 
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
@@ -42,6 +42,7 @@
  * @returns:
  *      - uint8_t error: A variable that will be 1 if an error has
  *                       occurred and 0 otherwise.
+ * --------------------- 
  */
 int poisson_args_t::allocateUserInputs(int argc, char** argv)
 {  
@@ -85,6 +86,7 @@ int poisson_args_t::allocateUserInputs(int argc, char** argv)
  * ------------------------------
  * Initalise the array's mapping the charge distribution
  * and resulting potential.
+ * --------------------- 
  */
 void * poisson_args_t::allocateVolume(void)
 {
@@ -113,6 +115,7 @@ void * poisson_args_t::allocateVolume(void)
  *                     followed by the number of Jacobi relaxation
  *                     iterations to perform, then an optional value
  *                     specifying the number of CPU cores to use.
+ * --------------------- 
  */
 void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 {  
@@ -133,6 +136,7 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
  *      - double* input: A 3-D array of potenial values represnting the
  * 						 previous iteration  of calculations using
  * 						 Jacobi relaxation.
+ * --------------------- 
 */
 void* poisson_args_t::performJacobiIteration(double* input)
 {
@@ -140,7 +144,8 @@ void* poisson_args_t::performJacobiIteration(double* input)
 	for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
 		for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
 			for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
-				double res = 0; // Set the result for this iteration to 0
+				
+				double res = 0; // Initalise the result for the current voxel to 0
 
 				// Calculate V[x+1, y, z, iter]
 				if (x < x_size - 1)
@@ -181,8 +186,7 @@ void* poisson_args_t::performJacobiIteration(double* input)
 				// Subtract the effect of the previous iteration
 				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
 
-				// Divide result by 6 as per Jacobi's relaxation
-				res /= 6;
+				res /= 6; // Divide result by 6 as per Jacobi's relaxation
 
 				// Store potential result for current voxel
 				potential[((z * y_size) + y) * x_size + x] = res; 
@@ -203,6 +207,7 @@ void* poisson_args_t::performJacobiIteration(double* input)
  * @returns:
  *      - uint8_t error: A variable that will be 1 if an error has
  *                       occurred and 0 otherwise.
+ * --------------------- 
 */
 int poisson_args_t::poissonDirichlet(void)
 {
