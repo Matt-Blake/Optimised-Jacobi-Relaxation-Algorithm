@@ -33,11 +33,11 @@
  * Save the results a list of strings to a .csv file.
  *
  * @params:
- * 		- char** results_strings: A pointer to the strings
- *                                to print.
+ * 		- std::string* results_strings: A pointer to the strings
+ *                                		to print.
  * --------------------- 
  */
-static void* saveResultsToCSV(char** output_strings)
+static void* saveResultsToCSV(std::string* output_strings)
 {
 	std::ofstream output_file;
     int num_results;
@@ -49,12 +49,45 @@ static void* saveResultsToCSV(char** output_strings)
 	// Save results
 	num_results = sizeof(output_strings); // Calculate the number of results
     for(int i=0; i < num_results; i++) {
-        output_file << *(output_strings[i]); // Save result to .csv file
+        output_file << output_strings[i]; // Save result to .csv file
     }
 
 	output_file.close();
 
 	return NULL;
+}
+
+
+/*
+ * Function:    saveResults
+ * ------------------------------
+ * Saves the time taken for Poisson's equation to be
+ * solved using Jacobi relaxation to a .csv.
+ *
+ * @params:
+ *      - poisson_args_t* poisson_args: The arguments needed to solve
+ * 					      				Poisson's equation.
+ * 		- uint64_t nanoseconds: The time taken to solve Poisson's
+ * 								equation (in ns).
+ * ---------------------
+ */
+void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
+{
+	std::string size_string;
+	std::string iterations_string;
+	std::string time_string;
+
+	// Convert results to strings
+	size_string = std::to_string(poisson_args->x_size);
+	iterations_string = std::to_string(poisson_args->num_iters);
+	time_string = std::to_string(nanoseconds);
+
+	// Save result
+	std::cout << size_string + ',' + iterations_string + ',' + time_string + '\n';
+	//saveResultsToCSV(results);
+
+	return NULL;
+
 }
 
 
@@ -73,15 +106,13 @@ void* calculateResults(poisson_args_t* poisson_args)
 {
 	struct timespec start, end;
     uint64_t nanoseconds;
-    std::string results_string;
 
 	// Calculate the time taken to solve Poisson's equation
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
     poisson_args->poissonDirichlet(); // Solve Poisson's equation based on arguments
     clock_gettime(CLOCK_MONOTONIC, &end); // End timer
     nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
-    results_string = std::to_string(nanoseconds);
-    std::cout << results_string + '\n'; // Print result
+	saveResults(poisson_args, nanoseconds);
 
 	return NULL;
 }

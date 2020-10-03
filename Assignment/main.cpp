@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     // Calculate the potential in a cuboid based on Poisson's equation
     poisson_args_pointer = &poisson_user_args;
     poisson_args_pointer->initPoissonArgs(argc, argv); // Initalise arguments for solving
-    calculateResults(poisson_args_pointer);
+    calculateResults(poisson_args_pointer); // Solve Poisson's equation and save the time taken
     
     return EXIT_SUCCESS;
 }
