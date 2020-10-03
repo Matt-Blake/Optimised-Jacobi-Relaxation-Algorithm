@@ -1,5 +1,5 @@
 **ENCE464 Assignment 2 - Algorithim Optimisation**  
-Group 1:  
+Group 1:
 * Matt Blake       (ID: 58979250)
 * Derrick Edward   (ID: 18017758)
 
