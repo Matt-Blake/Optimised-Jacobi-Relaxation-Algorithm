@@ -38,7 +38,8 @@
         - initPoissonArgs() - Initialises a poisson_args object
         - allocateUserInputs() - Allocates the user defined members during initalisation.
         - allocateVolume() - Allocates memory for the 3-D cuboid's volume.
-        - poissonDirichlet() - Solves Poisson's equation using Jacobi relaxation
+        - poissonDirichlet() - Solves Poisson's equation using Jacobi relaxation.
+        - performJacobiIteration() - Performs an iteration of Jacobi relaxation.
  * ---------------------
  */
 typedef class poisson_args
@@ -58,6 +59,7 @@ typedef class poisson_args
     private:
         int allocateUserInputs(int, char**);
         void* allocateVolume(void);
+        void* performJacobiIteration(double*);
 } poisson_args_t;
 
 

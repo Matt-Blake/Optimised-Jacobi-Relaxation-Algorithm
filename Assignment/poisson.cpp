@@ -122,12 +122,83 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
     return NULL;
 }
 
+
+/*
+ * Function:    poisson_args_t::performJacobiIteration
+ * ------------------------------
+ * Perform an iteration of Jacobi Relaxation
+ * input[i, j, k] is accessed with input[((k * ysize) + j) * xsize + i]
+ * 
+ * @returns:
+ *      - double* input: A 3-D array of potenial values represnting the
+ * 						 previous iteration  of calculations using
+ * 						 Jacobi relaxation.
+*/
+void* poisson_args_t::performJacobiIteration(double* input)
+{
+	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
+	for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
+		for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
+			for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
+				double res = 0; // Set the result for this iteration to 0
+
+				// Calculate V[x+1, y, z, iter]
+				if (x < x_size - 1)
+					res += input[((z * y_size) + y) * x_size + (x + 1)];
+				else // Boundary condition
+					res += V_bound;
+
+				// Calculate V[x-1, y, z, iter]
+				if (x > 0)
+					res += input[((z * y_size) + y) * x_size + (x - 1)];
+				else // Boundary condition
+					res += V_bound;
+
+				// Calculate V[x, y+1, z, iter]
+				if (y < y_size - 1)
+					res += input[((z * y_size) + (y + 1)) * x_size + x];
+				else // Boundary condition
+					res += V_bound;
+				
+				// Calculate V[x, y-1, z, iter]
+				if (y > 0)
+					res += input[((z * y_size) + (y - 1)) * x_size + x];
+				else // Boundary condition
+					res += V_bound;
+
+				// Calculate V[x, y, z+1, iter]
+				if (z < z_size - 1)
+					res += input[(((z + 1) * y_size) + y) * x_size + x];
+				else // Boundary condition
+					res += V_bound;
+
+				// Calculate V[x, y, z-1, iter]
+				if (z > 0)
+					res += input[(((z - 1) * y_size) + y) * x_size + x];
+				else // Boundary condition
+					res += V_bound; 
+
+				// Subtract the effect of the previous iteration
+				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
+
+				// Divide result by 6 as per Jacobi's relaxation
+				res /= 6;
+
+				// Store potential result for current voxel
+				potential[((z * y_size) + y) * x_size + x] = res; 
+			}
+		}
+	}
+
+	return NULL;
+}
+
+
 /*
  * Function:    poisson_args_t::poissonDirichlet
  * ------------------------------
  * Solve Poisson's equation for a rectangular box with Dirichlet
  * boundary conditions on each face.
- * source[i, j, k] is accessed with source[((k * ysize) + j) * xsize + i]
  * 
  * @returns:
  *      - uint8_t error: A variable that will be 1 if an error has
@@ -137,7 +208,7 @@ int poisson_args_t::poissonDirichlet(void)
 {
 	uint8_t error = EXIT_SUCCESS;
 
-	// Allocate memory for the potenial calculations to be stored
+	// Allocate memory for the potential calculations to be stored
     size_t size = (size_t) y_size * z_size * x_size * sizeof(double); // Calculate the amount of memory needed
 	double* input = (double *) malloc(size);
 
@@ -151,47 +222,8 @@ int poisson_args_t::poissonDirichlet(void)
 
 	// Perform iterations of Jacobi relaxation
 	memcpy(input, source, size); // Copy the source distribution as the input for the first iteration
-	for (unsigned int iter = 0; iter < num_iters; iter++) { // Perform iteration of Jacobi relaxation
-		for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
-			for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
-				for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
-					double res = 0; // Set the result for this iteration to 0
-
-					if (x < x_size - 1)
-						res += input[((z * y_size) + y) * x_size + (x + 1)];
-					else
-						res += V_bound;
-					if (x > 0)
-						res += input[((z * y_size) + y) * x_size + (x - 1)];
-					else
-						res += V_bound;
-
-					if (y < y_size - 1)
-						res += input[((z * y_size) + (y + 1)) * x_size + x];
-					else
-						res += V_bound;
-					if (y > 0)
-						res += input[((z * y_size) + (y - 1)) * x_size + x];
-					else
-						res += V_bound;
-
-					if (z < z_size - 1)
-						res += input[(((z + 1) * y_size) + y) * x_size + x];
-					else
-						res += V_bound;
-					if (z > 0)
-						res += input[(((z - 1) * y_size) + y) * x_size + x];
-					else
-						res += V_bound; 
-
-					res -= delta * delta * source[((z * y_size) + y) * x_size + x];
-
-					res /= 6;
-
-					potential[((z * y_size) + y) * x_size + x] = res;
-				}
-			}
-		}
+	for (unsigned int iter = 0; iter < num_iters; iter++) {
+		performJacobiIteration(input); // Perform iteration of Jacobi relaxation
 		memcpy(input, potential, size); // Copy the calculated potential as the input for the next iteration
 	}
 	free(input);
