@@ -1,5 +1,5 @@
 /* ****************************************************************
- * main.cpp
+ * results.cpp
  *
  * Part of ENCE464 Assignment 2
  * Source file containing the functions needed to save the results
@@ -17,41 +17,71 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <iostream>
 #include <fstream>
+#include "poisson.hpp"
 
 #define OUTPUT_FILEPATH		  	  "../Code outputs/Poisson Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Threads,Time Taken (ms)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
-
+#define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
 
 /*
  * Function:    saveResultsToCSV
  * ------------------------------
- * Save the results of the Algorithim Optimisation program
- * to a .csv file.
+ * Save the results a list of strings to a .csv file.
  *
  * @params:
- * 		- 
+ * 		- char** results_strings: A pointer to the strings
+ *                                to print.
  * --------------------- 
  */
-static void* saveResultsToCSV(void)
+static void* saveResultsToCSV(char** output_strings)
 {
 	std::ofstream output_file;
+    int num_results;
 
 	// Initalise file
 	output_file.open(OUTPUT_FILEPATH);
 	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
 
-	// Calculate the results without using threading
-	getNonThreadedSumResults(sum_arguments); 
-
-	// Calculate the results without using threading
-	for(int i = 1; i <= sum_arguments->nthreads; i++) { // Iterate through different numbers of threads
-		getThreadedSumResults(sum_arguments, i, &output_file);
-	}
+	// Save results
+	num_results = sizeof(output_strings); // Calculate the number of results
+    for(int i=0; i < num_results; i++) {
+        output_file << *(output_strings[i]); // Save result to .csv file
+    }
 
 	output_file.close();
+
+	return NULL;
+}
+
+
+/*
+ * Function:    calculateResults
+ * ------------------------------
+ * Calculates the time taken for Poisson's equation to be
+ * solved using Jacobi relaxation.
+ *
+ * @params:
+ *      - poisson_args_t* poisson_args: The arguments needed to solve
+ * 					      				Poisson's equation.
+ * ---------------------
+ */
+void* calculateResults(poisson_args_t* poisson_args)
+{
+	struct timespec start, end;
+    uint64_t nanoseconds;
+    std::string results_string;
+
+	// Calculate the time taken to solve Poisson's equation
+	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
+    poisson_args->poissonDirichlet(); // Solve Poisson's equation based on arguments
+    clock_gettime(CLOCK_MONOTONIC, &end); // End timer
+    nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
+    results_string = std::to_string(nanoseconds);
+    std::cout << results_string + '\n'; // Print result
 
 	return NULL;
 }

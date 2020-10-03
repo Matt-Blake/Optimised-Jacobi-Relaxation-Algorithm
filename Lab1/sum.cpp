@@ -20,7 +20,6 @@
 #include <cstdint>
 #include <cinttypes>
 #include <thread>
-#include <pthread.h>
 #include <iostream>
 #include <fstream>   
 

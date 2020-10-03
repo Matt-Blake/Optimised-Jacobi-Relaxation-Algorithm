@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "poisson.hpp"
+#include "results.hpp"
 
 
 /*
@@ -44,7 +45,7 @@ int main(int argc, char* argv[])
     // Calculate the potential in a cuboid based on Poisson's equation
     poisson_args_pointer = &poisson_user_args;
     poisson_args_pointer->initPoissonArgs(argc, argv); // Initalise arguments for solving
-    poisson_args_pointer->poissonDirichlet(); // Solve Poisson's equation based on arguments
+    calculateResults(poisson_args_pointer);
     
     return EXIT_SUCCESS;
 }
