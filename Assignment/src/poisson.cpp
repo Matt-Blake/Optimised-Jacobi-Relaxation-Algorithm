@@ -141,55 +141,63 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 void* poisson_args_t::performJacobiIteration(double* input)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
-	for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
-		for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
-			for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
+	for (unsigned int z = 1; z < (z_size - 1); z++) { // Iterate through cuboid's x values
+		for (unsigned int y = 1; y < (y_size - 1); y++) { // Iterate through cuboid's z values
+			for (unsigned int x = 1; x < (x_size - 1); x++) { // Iterate through cuboid's y values
 				
 				double res = 0; // Initalise the result for the current voxel to 0
+				res += input[((z * y_size) + y) * x_size + (x + 1)]; // V[x+1, y, z, iter]
+				res += input[((z * y_size) + y) * x_size + (x - 1)]; // V[x-1, y, z, iter]
+				res += input[((z * y_size) + (y + 1)) * x_size + x]; // V[x, y+1, z, iter]
+				res += input[((z * y_size) + (y - 1)) * x_size + x]; // V[x, y-1, z, iter]
+				res += input[(((z + 1) * y_size) + y) * x_size + x]; // V[x, y, z+1, iter]
+				res += input[(((z - 1) * y_size) + y) * x_size + x]; // V[x, y, z-1, iter]
+				res -= delta * delta * source[((z * y_size) + y) * x_size + x]; // Subtract the effect of the previous iteration
+				res /= 6; // Divide result by 6 as per Jacobi's relaxation
+				potential[((z * y_size) + y) * x_size + x] = res; // Store potential result for current voxel
 
 				// Calculate V[x+1, y, z, iter]
 				if (x < x_size - 1)
-					res += input[((z * y_size) + y) * x_size + (x + 1)];
+					
 				else // Boundary condition
 					res += V_bound;
 
 				// Calculate V[x-1, y, z, iter]
 				if (x > 0)
-					res += input[((z * y_size) + y) * x_size + (x - 1)];
+					
 				else // Boundary condition
 					res += V_bound;
 
-				// Calculate V[x, y+1, z, iter]
+				// Calculate 
 				if (y < y_size - 1)
-					res += input[((z * y_size) + (y + 1)) * x_size + x];
+					
 				else // Boundary condition
 					res += V_bound;
 				
-				// Calculate V[x, y-1, z, iter]
+				// Calculate 
 				if (y > 0)
-					res += input[((z * y_size) + (y - 1)) * x_size + x];
+					
 				else // Boundary condition
 					res += V_bound;
 
-				// Calculate V[x, y, z+1, iter]
+				// 
 				if (z < z_size - 1)
-					res += input[(((z + 1) * y_size) + y) * x_size + x];
+					
 				else // Boundary condition
 					res += V_bound;
 
-				// Calculate V[x, y, z-1, iter]
+				// Calculate 
 				if (z > 0)
-					res += input[(((z - 1) * y_size) + y) * x_size + x];
 				else // Boundary condition
 					res += V_bound; 
 
-				// Subtract the effect of the previous iteration
-				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
+				
+				
 
-				res /= 6; // Divide result by 6 as per Jacobi's relaxation
+				
 
-				// Store potential result for current voxel
-				potential[((z * y_size) + y) * x_size + x] = res; 
+				
+	
 			}
 		}
 	}

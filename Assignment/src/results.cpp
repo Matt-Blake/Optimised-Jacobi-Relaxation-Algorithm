@@ -86,6 +86,7 @@ void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
 
 	// Save result
 	result_string = size_string + ',' + iterations_string + ',' + time_string + '\n';
+	std::cout << result_string;
 	//saveResultsToCSV(results);
 
 	return NULL;
