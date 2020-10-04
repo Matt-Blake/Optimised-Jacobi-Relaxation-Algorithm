@@ -13,7 +13,6 @@
  *
  * ***************************************************************/
 
-#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -85,8 +84,6 @@ int main(int argc, char **argv)
 	} else {  // Calculate sum of buffer using non-linear methods
 		sum = iterate_bad(buffer, x_max, y_max);
 	}
-
-	std::cout << sum << '\n'; // Print the sum to the terminal
 
 	return 0;
 }

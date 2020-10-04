@@ -20,25 +20,25 @@
 #include <ctime>
 #include <iostream>
 #include <fstream>
-#include <list>
+#include <vector>
 #include "poisson.hpp"
 
-#define OUTPUT_FILEPATH		  	  "../Code outputs/Poisson Results.csv"	// The filepath of the .csv to write results to
+#define OUTPUT_FILEPATH		  	  "../../../Code outputs/Poisson Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Size,Iterations,Time Taken (ns)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 #define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
 
+
 /*
- * Function:    saveResultsToCSV
+ * Function:    saveTableToCSV
  * ------------------------------
- * Save the results a list of strings to a .csv file.
+ * Save the results to a .csv file as a table.
  *
  * @params:
- * 		- std::string* results_strings: A pointer to the strings
- *                                		to print.
+ * 		- std::vector<std::string> output_strings: The strings to save.
  * --------------------- 
  */
-static void* saveResultsToCSV(std::string* output_strings)
+static void* saveResultsToCSV(std::vector<std::string> output_strings)
 {
 	std::ofstream output_file;
     int num_results;
@@ -48,9 +48,10 @@ static void* saveResultsToCSV(std::string* output_strings)
 	output_file << (char*) CSV_HEADER_STRING; // Save table headers to .csv file
 
 	// Save results
-	num_results = sizeof(output_strings); // Calculate the number of results
+	num_results = output_strings.size(); // Calculate the number of results
     for(int i=0; i < num_results; i++) {
-        output_file << output_strings[i]; // Save result to .csv file
+        output_file << output_strings.at(i); // Save result to .csv file
+		std::cout << output_strings.at(i);
     }
 
 	output_file.close();
@@ -60,20 +61,24 @@ static void* saveResultsToCSV(std::string* output_strings)
 
 
 /*
- * Function:    saveResults
+ * Function:    getResultsString
  * ------------------------------
- * Saves the time taken for Poisson's equation to be
- * solved using Jacobi relaxation to a .csv.
+ * Returns a formatted result string based on the time taken to solve
+ * Poisson's equation with a particular set of arguments. This
+ * string can be printed or saved in a .txt or .csv file.
  *
  * @params:
  *      - poisson_args_t* poisson_args: The arguments needed to solve
  * 					      				Poisson's equation.
  * 		- uint64_t nanoseconds: The time taken to solve Poisson's
  * 								equation (in ns).
+ * @returns:
+ * 		- std::string: A string containing the results.
  * ---------------------
  */
-void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
+std::string getResultsString(poisson_args_t* poisson_args, uint64_t nanoseconds)
 {
+	static 
 	std::string size_string;
 	std::string iterations_string;
 	std::string time_string;
@@ -86,10 +91,8 @@ void* saveResults(poisson_args_t* poisson_args, uint64_t nanoseconds)
 
 	// Save result
 	result_string = size_string + ',' + iterations_string + ',' + time_string + '\n';
-	std::cout << result_string;
-	//saveResultsToCSV(results);
 
-	return NULL;
+	return result_string;
 
 }
 
@@ -109,13 +112,17 @@ void* calculateResults(poisson_args_t* poisson_args)
 {
 	struct timespec start, end;
     uint64_t nanoseconds;
+	std::string result_string;
+	std::vector<std::string> result_strings;
 
 	// Calculate the time taken to solve Poisson's equation
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
     poisson_args->poissonDirichlet(); // Solve Poisson's equation based on arguments
     clock_gettime(CLOCK_MONOTONIC, &end); // End timer
     nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
-	saveResults(poisson_args, nanoseconds);
+	result_string = getResultsString(poisson_args, nanoseconds); // Convert results to formatted string
+	result_strings.push_back(result_string); // Save results string in a vector
+	saveResultsToCSV(result_strings); // Save all results strings to a .csv file
 
 	return NULL;
 }

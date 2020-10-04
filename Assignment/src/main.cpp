@@ -15,6 +15,17 @@
  * Last modified: 03/10/2020
  * ***************************************************************/
 
+
+/* TODO LIST for MATT AND DERRICK
+- Implement threading
+- Implement cores (part of threading?)
+- Make sure memcopy replacement is sussing it properly
+- Implement loop unrolling
+- Look through lecture notes for other optimisations to implement
+- Tidy calculateResults function
+*/
+
+
 #include <cstdio>
 #include <cstdlib>
 #include "poisson.hpp"
@@ -32,7 +43,7 @@
  *      - int argc: The number of arguments passed into main
  *      - char** argv: The vector of arguments passed into main.
  * 					   This should contain the 3-D size of the box,
- *                     followed by the number of Jacobi relaxiation
+ *                     followed by the number of Jacobi relaxation
  *                     iterations to perform, then an optional value
  *                     specifying the number of CPU cores to use.         
  * ---------------------
