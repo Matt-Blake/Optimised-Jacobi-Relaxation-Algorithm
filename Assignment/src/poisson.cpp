@@ -18,12 +18,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 #include "poisson.hpp"
 
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
 #define V_BOUND             0       // Voltage potential on the box boundary
 #define CHARGE_VALUE        1       // The value of a point charge in the charge distribution
 #define ERROR_SYMBOL        1       // The value to return if an error occurs
+#define THREADS_PER_CORE	1		// The number of threads to use per core (optimal performance at 1)
 
 
 /*
@@ -250,26 +252,41 @@ void poisson_dirichlet (double * __restrict__ source,
                         unsigned int numiters, unsigned int numcores)
 
 {
-	uint8_t error = EXIT_SUCCESS;
 
 	// Allocate memory for the potential calculations to be stored
     size_t size = (size_t) ysize * zsize * xsize * sizeof(double); // Calculate the amount of memory needed
 	double* input = (double*) malloc(size);
 	double* temp;
+	int num_threads;
 
 	// Check if memory for 'input' was successfully allocated
 	if (!input) {
 		fprintf(stderr, "malloc failure\n"); // Print error
-		error = ERROR_SYMBOL;
 
 		return;
 	}
 
 	// Perform iterations of Jacobi relaxation
+	num_threads = numcores * THREADS_PER_CORE;
 	input = source; // Copy the source distribution as the input for the first iteration
 	for (unsigned int iter = 0; iter < numiters; iter++) {
-		potential = performJacobiIteration(input, potential, source, Vbound, xsize, ysize,
-										   zsize, delta); // Perform iteration of Jacobi relaxation
+		
+		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
+		thread_args threads[num_threads]; // Create an array of thread argument structs
+		for (int i = 0; i < num_threads; i++) {
+			threads[i].count = count/num_threads;
+			threads[i].z_start = i * count / num_threads;
+			threads[i].z_end = ((i + 1) * count / num_threads) - 1;
+
+			// Spawn thread to do a sub-section of Jacobi relaxation
+			std::thread jacobi_thread(performJacobiIteration, input, potential, source, Vbound, xsize,
+										   ysize, zsize, delta);//, &thread_arg[i]);
+										   //thread_arg[i].thread = &summing_thread;
+		
+		}
+
+		//potential = performJacobiIteration(input, potential, source, Vbound, xsize, ysize,
+		//								   zsize, delta); // Perform iteration of Jacobi relaxation
 		
 		// Swap pointers to prepare fo the next iteration
 		if (iter != (numiters - 1)) { // If another iteration will occur

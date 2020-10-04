@@ -243,7 +243,7 @@ static void threadSum(void)//thread_args* thread_arguments)
  */
 static double sumValues(sum_args* sum_arguments, int nthreads)
 {
-	struct thread_args thread_arg[nthreads];
+	thread_args thread_arg[nthreads];
 	double sum = 0;
 
 	// Print error and exit the number of values can not be split equally amongst the threads

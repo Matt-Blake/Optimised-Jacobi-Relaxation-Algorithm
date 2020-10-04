@@ -18,13 +18,12 @@
 
 /* TODO LIST for MATT AND DERRICK
 - Implement threading
-- Implement cores (part of threading?)
 - Implement loop unrolling
+- Implement profiling properly
 - Look through lecture notes for other optimisations to implement
-- Tidy calculateResults function
+- Tidy calculateResults function and make it run for multiple thread args
 - Make sure function is still sussing it properly
 */
-
 
 #include <cstdio>
 #include <cstdlib>
