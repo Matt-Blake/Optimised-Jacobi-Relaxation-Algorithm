@@ -18,7 +18,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <thread>
 #include "poisson.hpp"
 
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
@@ -27,6 +26,29 @@
 #define ERROR_SYMBOL        1       // The value to return if an error occurs
 #define THREADS_PER_CORE	1		// The number of threads to use per core (optimal performance at 1)
 
+
+/*
+ * Class:    thread_args
+ * ------------------------------
+ * Contains the information needed to split up Jacobi
+ * relaxation into slices solvable by threads. This is
+ * done by splitting the z-axis of the cuboid into slices.
+ * 
+ * 
+ * @members:
+        - unsigned int z_start: The z-axis value to start iterating from.
+        - unsigned int z_end: The z-axis value to iterate to.
+        - std::thread thread: The thread 
+
+ * ---------------------
+ */
+typedef class thread_args
+{
+    public:
+        unsigned int z_start;
+        unsigned int z_end;
+        std::thread thread;
+} thread_args_t;
 
 /*
  * Function:    poisson_args_t::allocateUserInputs
@@ -157,10 +179,11 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
  * --------------------- 
 */
 double* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
-							unsigned int x_size, unsigned int y_size, unsigned int z_size, double delta)
+							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
+							   double delta, thread_args_t* threads)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
-	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's x values
+	for (unsigned int z = threads->z_start; z < threads->z_end; z++) { // Iterate through cuboid's x values
 		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's z values
 			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's y values
 				
@@ -252,9 +275,8 @@ void poisson_dirichlet (double * __restrict__ source,
                         unsigned int numiters, unsigned int numcores)
 
 {
-
 	// Allocate memory for the potential calculations to be stored
-    size_t size = (size_t) ysize * zsize * xsize * sizeof(double); // Calculate the amount of memory needed
+    size_t size = (size_t) xsize * ysize * zsize * sizeof(double); // Calculate the amount of memory needed
 	double* input = (double*) malloc(size);
 	double* temp;
 	int num_threads;
@@ -272,18 +294,17 @@ void poisson_dirichlet (double * __restrict__ source,
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
-		thread_args threads[num_threads]; // Create an array of thread argument structs
+		thread_args_t threads[num_threads]; // Create an array of thread argument structs
 		for (int i = 0; i < num_threads; i++) {
 
 			// Split up z-axis values for each thread
-			threads[i].count = count/num_threads;
-			threads[i].z_start = i * count / num_threads;
-			threads[i].z_end = ((i + 1) * count / num_threads) - 1;
+			threads[i].z_start = i * zsize / num_threads;
+			threads[i].z_end = ((i + 1) * zsize / num_threads) - 1;
 
 			// Spawn thread to do a sub-section of Jacobi relaxation
 			std::thread jacobi_thread(performJacobiIteration, input, potential, source, Vbound, xsize,
-										   ysize, zsize, delta);//, &thread_arg[i]);
-		    threads[i].thread = &jacobi_thread;
+										   ysize, zsize, delta, &threads[i]);
+		    //threads[i].thread = &jacobi_thread;
 		}
 		
 		// Swap pointers to prepare fo the next iteration

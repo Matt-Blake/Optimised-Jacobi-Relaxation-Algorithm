@@ -22,7 +22,8 @@
 - Implement profiling properly
 - Look through lecture notes for other optimisations to implement
 - Tidy calculateResults function and make it run for multiple thread args
-- Make sure function is still sussing it properly
+- Make sure function is still sussing it properly (check final pointer for memcopy
+  and if it should be < z_end or <= z_end)
 */
 
 #include <cstdio>

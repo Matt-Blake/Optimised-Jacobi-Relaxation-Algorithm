@@ -18,6 +18,8 @@
 #ifndef POISSON_H
 #define POISSON_H
 
+#include <thread>
+
 
 /*
  * Class:    poisson_args
