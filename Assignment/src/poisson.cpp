@@ -274,6 +274,8 @@ void poisson_dirichlet (double * __restrict__ source,
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
 		thread_args threads[num_threads]; // Create an array of thread argument structs
 		for (int i = 0; i < num_threads; i++) {
+
+			// Split up z-axis values for each thread
 			threads[i].count = count/num_threads;
 			threads[i].z_start = i * count / num_threads;
 			threads[i].z_end = ((i + 1) * count / num_threads) - 1;
@@ -281,12 +283,8 @@ void poisson_dirichlet (double * __restrict__ source,
 			// Spawn thread to do a sub-section of Jacobi relaxation
 			std::thread jacobi_thread(performJacobiIteration, input, potential, source, Vbound, xsize,
 										   ysize, zsize, delta);//, &thread_arg[i]);
-										   //thread_arg[i].thread = &summing_thread;
-		
+		    threads[i].thread = &jacobi_thread;
 		}
-
-		//potential = performJacobiIteration(input, potential, source, Vbound, xsize, ysize,
-		//								   zsize, delta); // Perform iteration of Jacobi relaxation
 		
 		// Swap pointers to prepare fo the next iteration
 		if (iter != (numiters - 1)) { // If another iteration will occur
