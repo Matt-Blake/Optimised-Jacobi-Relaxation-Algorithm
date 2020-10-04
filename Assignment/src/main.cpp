@@ -19,10 +19,10 @@
 /* TODO LIST for MATT AND DERRICK
 - Implement threading
 - Implement cores (part of threading?)
-- Make sure memcopy replacement is sussing it properly
 - Implement loop unrolling
 - Look through lecture notes for other optimisations to implement
 - Tidy calculateResults function
+- Make sure function is still sussing it properly
 */
 
 

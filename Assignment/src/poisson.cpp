@@ -127,23 +127,40 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 
 
 /*
- * Function:    poisson_args_t::performJacobiIteration
+ * Function:    performJacobiIteration
  * ------------------------------
  * Perform an iteration of Jacobi Relaxation
- * input[i, j, k] is accessed with input[((k * ysize) + j) * xsize + i]
+ * input[i, j, k] is accessed with input[((k * y_size) + j) * x_size + i].
+ * This function is laid out to fulfill the ENCE464 Assignment 2
+ * specifications. However, future program develpments would have this
+ * function as a method to the poisson_args_t object.
  * 
- * @returns:
- *      - double* input: A 3-D array of potenial values represnting the
+ * @params:
+ *      - double* input: A 3-D array of potential values representing the
  * 						 previous iteration  of calculations using
  * 						 Jacobi relaxation.
+ * 		- double* potential: A 3-D array of potential values representing the
+ * 						    the calculations that will be performed this
+ * 						    iteration of Jacobi relaxation.
+ * 		- double* source: A 3-D array representing the charge distribution.
+ * 		- double V-bound: The potential on the boundary conditions.
+ * 		- unsigned int x_size: The number of x-axis elements.
+ * 		- unsigned int y_size: The number of y-axis elements.
+ * 		- unsigned int z_size: The number of z-axis elements.
+ *		- double delta: The spacing between voxels.
+ * @returns:
+ *      - double* potential: A 3-D array of potential values representing the
+ * 						    the calculations performed this iteration of
+ * 						    Jacobi relaxation.
  * --------------------- 
 */
-void* poisson_args_t::performJacobiIteration(double* input)
+double* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+							unsigned int x_size, unsigned int y_size, unsigned int z_size, double delta)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
 	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's x values
-		for (unsigned int y = 0; y < y_size - 1; y++) { // Iterate through cuboid's z values
-			for (unsigned int x = 0; x < x_size - 1; x++) { // Iterate through cuboid's y values
+		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's z values
+			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's y values
 				
 				double res = 0; // Initalise the result for the current voxel to 0
 
@@ -188,7 +205,7 @@ void* poisson_args_t::performJacobiIteration(double* input)
 				else // Boundary condition
 					res += V_bound; 
 
-				// Subtract the effect of the previous iteration
+				// Subtract the effect of the source
 				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
 
 				// Divide result by 6 as per Jacobi's relaxation
@@ -200,44 +217,67 @@ void* poisson_args_t::performJacobiIteration(double* input)
 		}
 	}
 
-	return NULL;
+	return potential;
 }
 
 
 /*
- * Function:    poisson_args_t::poissonDirichlet
+ * Function:    poisson_dirichlet
  * ------------------------------
  * Solve Poisson's equation for a rectangular box with Dirichlet
- * boundary conditions on each face.
+ * boundary conditions on each face. The remaining documentation
+ * is included to fulfill the ENCE464 Assignment 2 specifications.
+ * However, future program develpments would have this function
+ * as a method to the poisson_args_t object.
  * 
- * @returns:
- *      - uint8_t error: A variable that will be 1 if an error has
- *                       occurred and 0 otherwise.
  * --------------------- 
 */
-int poisson_args_t::poissonDirichlet(void)
+/// Solve Poisson's equation for a rectangular box with Dirichlet
+/// boundary conditions on each face.
+/// \param source is a pointer to a flattened 3-D array for the source function
+/// \param potential is a pointer to a flattened 3-D array for the calculated potential
+/// \param Vbound is the potential on the boundary
+/// \param xsize is the number of elements in the x-direction
+/// \param ysize is the number of elements in the y-direction
+/// \param zsize is the number of elements in the z-direction
+/// \param delta is the voxel spacing in all directions
+/// \param numiters is the number of iterations to perform
+/// \param numcores is the number of CPU cores to use.  If 0, an optimal number is chosen
+void poisson_dirichlet (double * __restrict__ source,
+                        double * __restrict__ potential,
+                        double Vbound,
+                        unsigned int xsize, unsigned int ysize, unsigned int zsize, double delta,
+                        unsigned int numiters, unsigned int numcores)
+
 {
 	uint8_t error = EXIT_SUCCESS;
 
 	// Allocate memory for the potential calculations to be stored
-    size_t size = (size_t) y_size * z_size * x_size * sizeof(double); // Calculate the amount of memory needed
+    size_t size = (size_t) ysize * zsize * xsize * sizeof(double); // Calculate the amount of memory needed
 	double* input = (double*) malloc(size);
+	double* temp;
 
 	// Check if memory for 'input' was successfully allocated
 	if (!input) {
 		fprintf(stderr, "malloc failure\n"); // Print error
 		error = ERROR_SYMBOL;
 
-		return error;
+		return;
 	}
 
 	// Perform iterations of Jacobi relaxation
 	input = source; // Copy the source distribution as the input for the first iteration
-	for (unsigned int iter = 0; iter < num_iters; iter++) {
-		performJacobiIteration(input); // Perform iteration of Jacobi relaxation
-		input = potential; // Copy the calculated potential as the input for the next iteration
+	for (unsigned int iter = 0; iter < numiters; iter++) {
+		potential = performJacobiIteration(input, potential, source, Vbound, xsize, ysize,
+										   zsize, delta); // Perform iteration of Jacobi relaxation
+		
+		// Swap pointers to prepare fo the next iteration
+		if (iter != (numiters - 1)) { // If another iteration will occur
+			temp = input;
+			input = potential; // Copy the calculated potential as the input for the next iteration
+			potential = temp; // Copy the potential that will be modified to a different address as the input
+		}
 	}
-	free(input);
 
-	return error;
+	free(input);
 }

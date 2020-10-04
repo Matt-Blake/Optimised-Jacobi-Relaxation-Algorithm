@@ -117,7 +117,9 @@ void* calculateResults(poisson_args_t* poisson_args)
 
 	// Calculate the time taken to solve Poisson's equation
 	clock_gettime(CLOCK_MONOTONIC, &start); // Start timer
-    poisson_args->poissonDirichlet(); // Solve Poisson's equation based on arguments
+    poisson_dirichlet(poisson_args->source, poisson_args->potential, poisson_args->V_bound, poisson_args->x_size,
+					  poisson_args->y_size, poisson_args->z_size, poisson_args->delta, poisson_args->num_iters,
+					  poisson_args->num_cores); // Solve Poisson's equation based on arguments
     clock_gettime(CLOCK_MONOTONIC, &end); // End timer
     nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
 	result_string = getResultsString(poisson_args, nanoseconds); // Convert results to formatted string
