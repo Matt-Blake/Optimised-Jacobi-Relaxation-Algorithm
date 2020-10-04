@@ -18,6 +18,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
+#include <vector>
 #include "poisson.hpp"
 
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
@@ -38,8 +40,6 @@
  * @members:
         - unsigned int z_start: The z-axis value to start iterating from.
         - unsigned int z_end: The z-axis value to iterate to.
-        - std::thread thread: The thread 
-
  * ---------------------
  */
 typedef class thread_args
@@ -47,7 +47,6 @@ typedef class thread_args
     public:
         unsigned int z_start;
         unsigned int z_end;
-        std::thread thread;
 } thread_args_t;
 
 /*
@@ -245,6 +244,9 @@ double* performJacobiIteration(double* input, double* potential, double* source,
 	return potential;
 }
 
+void threadJacobiIteration(void)
+{}
+
 
 /*
  * Function:    poisson_dirichlet
@@ -280,7 +282,7 @@ void poisson_dirichlet (double * __restrict__ source,
 	double* input = (double*) malloc(size);
 	double* temp;
 	int num_threads;
-
+	
 	// Check if memory for 'input' was successfully allocated
 	if (!input) {
 		fprintf(stderr, "malloc failure\n"); // Print error
@@ -288,13 +290,20 @@ void poisson_dirichlet (double * __restrict__ source,
 		return;
 	}
 
-	// Perform iterations of Jacobi relaxation
+	// Calculate number of threads needed to split up Jacobi relaxation into slices
 	num_threads = numcores * THREADS_PER_CORE;
+	if (num_threads < zsize) { // Catch case where the cubiod is very small, so data can't be split into threads
+		num_threads = zsize;
+	}
+
+	// Perform iterations of Jacobi relaxation
 	input = source; // Copy the source distribution as the input for the first iteration
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
 		thread_args_t threads[num_threads]; // Create an array of thread argument structs
+		std::vector<std::thread> thread_vector(num_threads);
+
 		for (int i = 0; i < num_threads; i++) {
 
 			// Split up z-axis values for each thread
@@ -302,11 +311,16 @@ void poisson_dirichlet (double * __restrict__ source,
 			threads[i].z_end = ((i + 1) * zsize / num_threads) - 1;
 
 			// Spawn thread to do a sub-section of Jacobi relaxation
-			std::thread jacobi_thread(performJacobiIteration, input, potential, source, Vbound, xsize,
-										   ysize, zsize, delta, &threads[i]);
-		    //threads[i].thread = &jacobi_thread;
+			thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, Vbound, xsize,
+										   ysize, zsize, delta, &threads[i]); // Add thread to vector
 		}
 		
+		// Resolve threads once they are finished
+		for (int i = 0; i < num_threads; i++) {
+			thread_vector[i].join();
+		}
+
+
 		// Swap pointers to prepare fo the next iteration
 		if (iter != (numiters - 1)) { // If another iteration will occur
 			temp = input;
