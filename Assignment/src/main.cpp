@@ -17,12 +17,11 @@
 
 
 /* TODO LIST for MATT AND DERRICK
-- Implement threading
+- Check if thread working properly
 - Suss threading so it works with a non-divisable amount
 - Implement loop unrolling
 - Implement profiling properly
 - Look through lecture notes for other optimisations to implement
-- Tidy calculateResults function and make it run for multiple thread args
 - Make sure function is still sussing it properly (check final pointer for memcopy
   and if it should be < z_end or <= z_end)
 */

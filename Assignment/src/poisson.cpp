@@ -308,7 +308,11 @@ void poisson_dirichlet (double * __restrict__ source,
 
 			// Split up z-axis values for each thread
 			threads[i].z_start = i * zsize / num_threads;
-			threads[i].z_end = ((i + 1) * zsize / num_threads) - 1;
+			if (i != (num_threads - 1)) {
+				threads[i].z_end = ((i + 1) * zsize / num_threads) - 1;
+			} else { // For the final thread the end value should be the last z-axis value
+				threads[i].z_end = zsize;
+			}
 
 			// Spawn thread to do a sub-section of Jacobi relaxation
 			thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, Vbound, xsize,
