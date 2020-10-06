@@ -22,6 +22,8 @@
 #include <vector>
 #include "poisson.hpp"
 
+#include <iostream>
+
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
 #define V_BOUND             0       // Voltage potential on the box boundary
 #define CHARGE_VALUE        1       // The value of a point charge in the charge distribution
@@ -152,7 +154,7 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 /*
  * Function:    performJacobiIteration
  * ------------------------------
- * Perform an iteration of Jacobi Relaxation
+ * Perform an iteration of Jacobi Relaxation using a single thread.
  * input[i, j, k] is accessed with input[((k * y_size) + j) * x_size + i].
  * This function is laid out to fulfill the ENCE464 Assignment 2
  * specifications. However, future program develpments would have this
@@ -171,13 +173,11 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
  * 		- unsigned int y_size: The number of y-axis elements.
  * 		- unsigned int z_size: The number of z-axis elements.
  *		- double delta: The spacing between voxels.
- * @returns:
- *      - double* potential: A 3-D array of potential values representing the
- * 						    the calculations performed this iteration of
- * 						    Jacobi relaxation.
+ *		- thread_args_t* threads: A pointer to the start and finishing z-axis
+								  values iterated through by this thread.
  * --------------------- 
 */
-double* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+void* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
 							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
 							   double delta, thread_args_t* threads)
 {
@@ -240,12 +240,66 @@ double* performJacobiIteration(double* input, double* potential, double* source,
 			}
 		}
 	}
-
-	return potential;
+	
+	return NULL;
 }
 
-void threadJacobiIteration(void)
-{}
+
+/*
+ * Function:    threadJacobiIteration
+ * ------------------------------
+ * Perform an iteration of Jacobi Relaxation. This is done by splitting
+ * the z-axis of the cubiod into threads.
+ * input[i, j, k] is accessed with input[((k * y_size) + j) * x_size + i].
+ * This function is laid out to fulfill the ENCE464 Assignment 2
+ * specifications. However, future program develpments would have this
+ * function as a method to the poisson_args_t object.
+ * 
+ * @params:
+ *      - double* input: A 3-D array of potential values representing the
+ * 						 previous iteration  of calculations using
+ * 						 Jacobi relaxation.
+ * 		- double* potential: A 3-D array of potential values representing the
+ * 						    the calculations that will be performed this
+ * 						    iteration of Jacobi relaxation.
+ * 		- double* source: A 3-D array representing the charge distribution.
+ * 		- double V-bound: The potential on the boundary conditions.
+ * 		- unsigned int x_size: The number of x-axis elements.
+ * 		- unsigned int y_size: The number of y-axis elements.
+ * 		- unsigned int z_size: The number of z-axis elements.
+ *		- double delta: The spacing between voxels.
+ *		- unsigned int num_threads: The number of threads being used.
+ * --------------------- 
+*/
+void* threadJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+						   unsigned int x_size, unsigned int y_size, unsigned int z_size,
+						   double delta, unsigned int num_threads)
+{
+	thread_args_t threads[num_threads]; // Create an array of thread argument structs
+	std::vector<std::thread> thread_vector(num_threads);
+
+	for (int i = 0; i < num_threads; i++) {
+
+		// Split up z-axis values for each thread
+		threads[i].z_start = i * z_size / num_threads;
+		if (i != (num_threads - 1)) {
+			threads[i].z_end = ((i + 1) * z_size / num_threads) - 1;
+		} else { // For the final thread the end value should be the last z-axis value
+			threads[i].z_end = z_size;
+		}
+
+		// Spawn thread to do a sub-section of Jacobi relaxation
+		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, V_bound, x_size,
+										y_size, z_size, delta, &threads[i]); // Add thread to vector
+	}
+	
+	// Resolve threads once they are finished
+	for (int i = 0; i < num_threads; i++) {
+		thread_vector[i].join();
+	}
+
+	return NULL;
+}
 
 
 /*
@@ -281,7 +335,7 @@ void poisson_dirichlet (double * __restrict__ source,
     size_t size = (size_t) xsize * ysize * zsize * sizeof(double); // Calculate the amount of memory needed
 	double* input = (double*) malloc(size);
 	double* temp;
-	int num_threads;
+	unsigned int num_threads;
 	
 	// Check if memory for 'input' was successfully allocated
 	if (!input) {
@@ -292,7 +346,7 @@ void poisson_dirichlet (double * __restrict__ source,
 
 	// Calculate number of threads needed to split up Jacobi relaxation into slices
 	num_threads = numcores * THREADS_PER_CORE;
-	if (num_threads < zsize) { // Catch case where the cubiod is very small, so data can't be split into threads
+	if (num_threads > zsize) { // Catch case where the cubiod is very small, so data can't be split into threads
 		num_threads = zsize;
 	}
 
@@ -301,28 +355,7 @@ void poisson_dirichlet (double * __restrict__ source,
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
-		thread_args_t threads[num_threads]; // Create an array of thread argument structs
-		std::vector<std::thread> thread_vector(num_threads);
-
-		for (int i = 0; i < num_threads; i++) {
-
-			// Split up z-axis values for each thread
-			threads[i].z_start = i * zsize / num_threads;
-			if (i != (num_threads - 1)) {
-				threads[i].z_end = ((i + 1) * zsize / num_threads) - 1;
-			} else { // For the final thread the end value should be the last z-axis value
-				threads[i].z_end = zsize;
-			}
-
-			// Spawn thread to do a sub-section of Jacobi relaxation
-			thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, Vbound, xsize,
-										   ysize, zsize, delta, &threads[i]); // Add thread to vector
-		}
-		
-		// Resolve threads once they are finished
-		for (int i = 0; i < num_threads; i++) {
-			thread_vector[i].join();
-		}
+		threadJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta, num_threads);
 
 
 		// Swap pointers to prepare fo the next iteration

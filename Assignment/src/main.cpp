@@ -17,8 +17,6 @@
 
 
 /* TODO LIST for MATT AND DERRICK
-- Check if thread working properly
-- Suss threading so it works with a non-divisable amount
 - Implement loop unrolling
 - Implement profiling properly
 - Look through lecture notes for other optimisations to implement
