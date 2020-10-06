@@ -23,7 +23,7 @@
 #include <vector>
 #include "poisson.hpp"
 
-#define OUTPUT_FILEPATH		  	  "../../../Code outputs/Poisson Results.csv"	// The filepath of the .csv to write results to
+#define OUTPUT_FILEPATH		  	  "../../../Code outputs/Assignment/Poisson Results.csv"	// The filepath of the .csv to write results to
 #define CSV_HEADER_STRING		  "Size,Iterations,Time Taken (ns)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 #define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds

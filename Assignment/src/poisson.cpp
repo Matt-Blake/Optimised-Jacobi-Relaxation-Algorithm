@@ -365,6 +365,38 @@ void poisson_dirichlet (double * __restrict__ source,
 			potential = temp; // Copy the potential that will be modified to a different address as the input
 		}
 	}
+	
+	/*for (int i=0; i < zsize; i++) {
+		for (int j=0; j < ysize; j++) {
+			for (int k=0; k < xsize; k++) {
+				if (k == 0) {
+					std::cout << '[';
+				} 
+				std::cout << potential[((k * ysize) + j) * xsize + i];
+				
+				if (k == (xsize - 1)) {
+					std::cout << ']';
+				} else {
+					std::cout << ", ";
+				}
+				//std::cout << "potential ";
+				//std::cout << potential[((k * ysize) + j) * xsize + i];
+				//std::cout << '\n';
+				//std::cout << "z value ";
+				//std::cout << i;
+	    		//std::cout << '\n';
+				//std::cout << "y value ";
+				//std::cout << j;
+	    		//std::cout << '\n';
+				//std::cout << "x value ";
+				//std::cout << k;
+	    		//std::cout << '\n';
+				//std::cout << '\n';
+				
+			}
+		}
+	}*/
+	
 
 	free(input);
 }
