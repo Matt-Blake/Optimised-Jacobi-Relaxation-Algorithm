@@ -178,7 +178,7 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 */
 void* performJacobiIteration(double* input, double* potential, double* source, 
 							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
-							   double delta, unsigned int num_threads, thread_args_t* threads)
+							   double delta, unsigned int num_threads, thread_args_t* threads, double V_bound)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
 	for (unsigned int z = threads->thread_number; z < (z_size - 1); z+=num_threads) { // Iterate through cuboid's z values
@@ -203,6 +203,29 @@ void* performJacobiIteration(double* input, double* potential, double* source,
 	
 	return NULL;
 }
+/*{
+	for (unsigned int z = 1; z < (z_size - 1); z++) {
+		for (unsigned int y = 1; y < (y_size - 1); y++) {
+			for (unsigned int x = 1; x < (x_size - 1); x++) {
+				double res = 0;
+
+				res += input[((z * y_size) + y) * x_size + (x + 1)];
+				res += input[((z * y_size) + y) * x_size + (x - 1)];
+				res += input[((z * y_size) + (y + 1)) * x_size + x];
+				res += input[((z * y_size) + (y - 1)) * x_size + x];
+				res += input[(((z + 1) * y_size) + y) * x_size + x];
+				res += input[(((z - 1) * y_size) + y) * x_size + x];
+
+				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
+
+				res /= 6;
+
+				potential[((z * y_size) + y) * x_size + x] = res;
+			}
+		}
+	}
+	return NULL;
+}*/
 
 
 /*
@@ -248,6 +271,7 @@ void* performJacobiBoundaryIteration(double* input, double* potential, double* s
 			double result = 0;
 			x_bound = 0;
 			result += V_bound; // V[x-1, y, z]
+			result += input[((z * y_size) + y) * x_size + (x_bound + 1)]; // V[x+1, y, z]
 			if (y < (y_size - 1)) {
 				result += input[((z * y_size) + (y + 1)) * x_size + x_bound]; // V[x, y+1, z]
 			} else {
@@ -271,11 +295,12 @@ void* performJacobiBoundaryIteration(double* input, double* potential, double* s
 			result -= delta * delta * source[((z * y_size) + y) * x_size + x_bound]; // Subtract the effect of the source
 			result /= 6;
 			potential[((z * y_size) + y) * x_size + x_bound] = result; // Store potential result for current voxel
-
+			
 			// x-axis max boundary case
 			result = 0;
 			x_bound = x_size - 1;
 			result += V_bound; // V[x+1, y, z]
+			result += input[((z * y_size) + y) * x_size + (x_bound - 1)]; // V[x-1, y, z]
 			if (y < (y_size - 1)) {
 				result += input[((z * y_size) + (y + 1)) * x_size + x_bound]; // V[x, y+1, z]
 			} else {
@@ -310,6 +335,7 @@ void* performJacobiBoundaryIteration(double* input, double* potential, double* s
 			double result = 0;
 			y_bound = 0;
 			result += V_bound; // V[x, y-1, z]
+			result += input[((z * y_size) + (y_bound + 1)) * x_size + x]; // V[x, y+1, z] 
 			if (x < (x_size - 1)) {
 				result += input[((z * y_size) + y_bound) * x_size + (x + 1)]; // V[x+1, y, z]
 			} else {
@@ -338,6 +364,7 @@ void* performJacobiBoundaryIteration(double* input, double* potential, double* s
 			result = 0;
 			y_bound = y_size - 1;
 			result += V_bound; // V[x, y+1, z]
+			result += input[((z * y_size) + (y_bound - 1)) * x_size + x]; // V[x, y-1, z] 
 			if (x < (x_size - 1)) {
 				result += input[((z * y_size) + y_bound) * x_size + (x + 1)]; // V[x+1, y, z]
 			} else {
@@ -413,12 +440,12 @@ void* performJacobiBoundaryIteration(double* input, double* potential, double* s
 				result += V_bound;
 			}
 			if (y < (y_size - 1)) {
-				result += input[(((z_bound + 1) * y_size) + y) * x_size + x]; // V[x, y+1, z]
+				result += input[((z_bound * y_size) + (y + 1)) * x_size + x]; // V[x, y+1, z]
 			} else {
 				result += V_bound;
 			}
 			if (y > 0) {
-				result += input[(((z_bound - 1) * y_size) + y) * x_size + x]; // V[x, y-1, z]
+				result += input[((z_bound * y_size) + (y - 1)) * x_size + x]; // V[x, y-1, z]
 			} else {
 				result += V_bound;
 			}
@@ -470,7 +497,7 @@ void* threadJacobiIteration(double* input, double* potential, double* source, do
 	for (int i = 0; i < num_threads; i++) {
 		threads[i].thread_number = i + 1;
 		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, x_size, y_size,
-								       z_size, delta, num_threads, &threads[i]); // Add thread to vector
+								       z_size, delta, num_threads, &threads[i], V_bound); // Add thread to vector
 	}
 	
 	// Resolve threads once they are finished

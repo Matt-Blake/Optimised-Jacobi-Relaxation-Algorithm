@@ -12,7 +12,7 @@
  * ENCE464 Assignment 2 Group 1
  * Creators: Matt Blake          58979250
  *           Derrick Edward      18017758
- * Last modified: 03/10/2020
+ * Last modified: 08/10/2020
  * ***************************************************************/
 
 
