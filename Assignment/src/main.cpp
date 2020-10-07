@@ -17,12 +17,13 @@
 
 
 /* TODO LIST for MATT AND DERRICK
-- Implement loop unrolling -> Matt
+- Debug loop unrolling, then implement threading for it -> Matt
 - Implement profiling properly on Linux -> Derrick
 - Look at the Graphical cache/valgrind output on Linux (look at lab 2) -> Matt or Derrick
-- Look at Lab 4 -> Matt/Derrick
+- Should we be sussing 03 or 0fast in the makefile? -> Matt/Derrick
 - Look through lecture notes for other optimisations to implement -> Derrick
 - Suss first memcopy -> Matt
+- Fix seg faulting for large and even N -> Matt
 - Make sure function is still sussing it properly (check even and odd etc)
   then delete output results thing and iostream -> Matt at end
 */

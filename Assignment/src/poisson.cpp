@@ -167,17 +167,16 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
  * 						    the calculations that will be performed this
  * 						    iteration of Jacobi relaxation.
  * 		- double* source: A 3-D array representing the charge distribution.
- * 		- double V-bound: The potential on the boundary conditions.
  * 		- unsigned int x_size: The number of x-axis elements.
  * 		- unsigned int y_size: The number of y-axis elements.
  * 		- unsigned int z_size: The number of z-axis elements.
  *		- double delta: The spacing between voxels.
  *		- unsigned int num_threads: The number of threads being used.
  *		- thread_args_t* threads: A pointer to the start and finishing z-axis
-								  values iterated through by this thread.
+ *								  values to iterate through for each thread
  * --------------------- 
 */
-void* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+void* performJacobiIteration(double* input, double* potential, double* source, 
 							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
 							   double delta, unsigned int num_threads, thread_args_t* threads)
 {
@@ -196,7 +195,7 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
 				result += input[(((z - 1) * y_size) + y) * x_size + x]; // V[x, y, z-1]
 				result -= delta * delta * source[((z * y_size) + y) * x_size + x]; // Subtract the effect of the source
 				result /= 6;
-				
+
 				potential[((z * y_size) + y) * x_size + x] = result; // Store potential result for current voxel
 			}
 		}
@@ -205,6 +204,232 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
 	return NULL;
 }
 
+
+/*
+ * Function:    performJacobiBoundaryIteration
+ * ------------------------------
+ * Perform an iteration of Jacobi Relaxation by focusing on
+ * boundary conditions.
+ * This function is laid out to fulfill the ENCE464 Assignment 2
+ * specifications. However, future program develpments would have this
+ * function as a method to the poisson_args_t object.
+ * 
+ * @params:
+ *      - double* input: A 3-D array of potential values representing the
+ * 						 previous iteration  of calculations using
+ * 						 Jacobi relaxation.
+ * 		- double* potential: A 3-D array of potential values representing the
+ * 						    the calculations that will be performed this
+ * 						    iteration of Jacobi relaxation.
+ * 		- double* source: A 3-D array representing the charge distribution.
+ * 		- double V-bound: The potential on the boundary conditions.
+ * 		- unsigned int x_size: The number of x-axis elements.
+ * 		- unsigned int y_size: The number of y-axis elements.
+ * 		- unsigned int z_size: The number of z-axis elements.
+ *		- double delta: The spacing between voxels.
+ *		- unsigned int num_threads: The number of threads being used.
+ *		- thread_args_t* threads: A pointer to the start and finishing axis values
+ *								  to iterate through for each thread
+ * --------------------- 
+*/
+void* performJacobiBoundaryIteration(double* input, double* potential, double* source, double V_bound,
+									unsigned int x_size, unsigned int y_size, unsigned int z_size,
+									double delta, unsigned int num_threads, thread_args_t* threads)
+{
+	unsigned int x_bound = 0;
+	unsigned int y_bound = 0;
+	unsigned int z_bound = 0;
+
+	// Calculate x-axis boundary cases
+	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
+		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
+			
+			// x-axis 0 boundary case
+			double result = 0;
+			x_bound = 0;
+			result += V_bound; // V[x-1, y, z]
+			if (y < (y_size - 1)) {
+				result += input[((z * y_size) + (y + 1)) * x_size + x_bound]; // V[x, y+1, z]
+			} else {
+				result += V_bound;
+			}
+			if (y > 0) {
+				result += input[((z * y_size) + (y - 1)) * x_size + x_bound]; // V[x, y-1, z]
+			} else {
+				result += V_bound;
+			}
+			if (z < (z_size - 1)) {
+				result += input[(((z + 1) * y_size) + y) * x_size + x_bound]; // V[x, y, z+1]
+			} else {
+				result += V_bound;
+			}
+			if (z > 0) {
+				result += input[(((z - 1) * y_size) + y) * x_size + x_bound]; // V[x, y, z-1]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z * y_size) + y) * x_size + x_bound]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z * y_size) + y) * x_size + x_bound] = result; // Store potential result for current voxel
+
+			// x-axis max boundary case
+			result = 0;
+			x_bound = x_size - 1;
+			result += V_bound; // V[x+1, y, z]
+			if (y < (y_size - 1)) {
+				result += input[((z * y_size) + (y + 1)) * x_size + x_bound]; // V[x, y+1, z]
+			} else {
+				result += V_bound;
+			}
+			if (y > 0) {
+				result += input[((z * y_size) + (y - 1)) * x_size + x_bound]; // V[x, y-1, z]
+			} else {
+				result += V_bound;
+			}
+			if (z < (z_size - 1)) {
+				result += input[(((z + 1) * y_size) + y) * x_size + x_bound]; // V[x, y, z+1]
+			} else {
+				result += V_bound;
+			}
+			if (z > 0) {
+				result += input[(((z - 1) * y_size) + y) * x_size + x_bound]; // V[x, y, z-1]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z * y_size) + y) * x_size + x_bound]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z * y_size) + y) * x_size + x_bound] = result; // Store potential result for current voxel
+		}
+	}
+
+	// Calculate y-axis boundary cases
+	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's z values
+		for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
+			
+			// y-axis 0 boundary case
+			double result = 0;
+			y_bound = 0;
+			result += V_bound; // V[x, y-1, z]
+			if (x < (x_size - 1)) {
+				result += input[((z * y_size) + y_bound) * x_size + (x + 1)]; // V[x+1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (x > 0) {
+				result += input[((z * y_size) + y_bound) * x_size + (x - 1)]; // V[x-1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (z < (z_size - 1)) {
+				result += input[(((z + 1) * y_size) + y_bound) * x_size + x]; // V[x, y, z+1]
+			} else {
+				result += V_bound;
+			}
+			if (z > 0) {
+				result += input[(((z - 1) * y_size) + y_bound) * x_size + x]; // V[x, y, z-1]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z * y_size) + y_bound) * x_size + x]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z * y_size) + y_bound) * x_size + x] = result; // Store potential result for current voxel
+
+			// y-axis max boundary case
+			result = 0;
+			y_bound = y_size - 1;
+			result += V_bound; // V[x, y+1, z]
+			if (x < (x_size - 1)) {
+				result += input[((z * y_size) + y_bound) * x_size + (x + 1)]; // V[x+1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (x > 0) {
+				result += input[((z * y_size) + y_bound) * x_size + (x - 1)]; // V[x-1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (z < (z_size - 1)) {
+				result += input[(((z + 1) * y_size) + y_bound) * x_size + x]; // V[x, y, z+1]
+			} else {
+				result += V_bound;
+			}
+			if (z > 0) {
+				result += input[(((z - 1) * y_size) + y_bound) * x_size + x]; // V[x, y, z-1]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z * y_size) + y_bound) * x_size + x]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z * y_size) + y_bound) * x_size + x] = result; // Store potential result for current voxel
+		}
+	}
+
+	// Calculate z-axis boundary cases
+	for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
+		for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
+			
+			// z-axis 0 boundary case
+			double result = 0;
+			z_bound = 0;
+			result += V_bound; // V[x, y, z-1]
+			result += input[(((z_bound + 1) * y_size) + y) * x_size + x];; // V[x, y, z+1]
+			if (x < (x_size - 1)) {
+				result += input[((z_bound * y_size) + y) * x_size + (x + 1)]; // V[x+1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (x > 0) {
+				result += input[((z_bound * y_size) + y) * x_size + (x - 1)]; // V[x-1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (y < (y_size - 1)) {
+				result += input[(((z_bound) * y_size) + (y + 1)) * x_size + x]; // V[x, y+1, z]
+			} else {
+				result += V_bound;
+			}
+			if (y > 0) {
+				result += input[(((z_bound) * y_size) + (y - 1)) * x_size + x]; // V[x, y-1, z]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z_bound * y_size) + y) * x_size + x]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z_bound * y_size) + y) * x_size + x] = result; // Store potential result for current voxel
+
+			// z-axis max boundary case
+			result = 0;
+			z_bound = z_size - 1;
+			result += V_bound; // V[x, y, z+1]
+			result += input[(((z_bound - 1) * y_size) + y) * x_size + x];; // V[x, y, z-1]
+			if (x < (x_size - 1)) {
+				result += input[((z_bound * y_size) + y) * x_size + (x + 1)]; // V[x+1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (x > 0) {
+				result += input[((z_bound * y_size) + y) * x_size + (x - 1)]; // V[x-1, y, z]
+			} else {
+				result += V_bound;
+			}
+			if (y < (y_size - 1)) {
+				result += input[(((z_bound + 1) * y_size) + y) * x_size + x]; // V[x, y+1, z]
+			} else {
+				result += V_bound;
+			}
+			if (y > 0) {
+				result += input[(((z_bound - 1) * y_size) + y) * x_size + x]; // V[x, y-1, z]
+			} else {
+				result += V_bound;
+			}
+			result -= delta * delta * source[((z_bound * y_size) + y) * x_size + x]; // Subtract the effect of the source
+			result /= 6;
+			potential[((z_bound * y_size) + y) * x_size + x] = result; // Store potential result for current voxel
+		}
+	}
+
+	return NULL;
+}
 
 /*
  * Function:    threadJacobiIteration
@@ -238,17 +463,32 @@ void* threadJacobiIteration(double* input, double* potential, double* source, do
 {
 	thread_args_t threads[num_threads]; // Create an array of thread argument structs
 	std::vector<std::thread> thread_vector(num_threads);
+	thread_args_t threads_boundary[num_threads]; // Create an array of thread argument structs
+	std::vector<std::thread> thread_boundary_vector(num_threads);
 
 	// Spawn thread to do a sub-section of Jacobi relaxation
 	for (int i = 0; i < num_threads; i++) {
 		threads[i].thread_number = i + 1;
-		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, V_bound, x_size,
-										y_size, z_size, delta, num_threads, &threads[i]); // Add thread to vector
+		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, x_size, y_size,
+								       z_size, delta, num_threads, &threads[i]); // Add thread to vector
 	}
 	
 	// Resolve threads once they are finished
 	for (int i = 0; i < num_threads; i++) {
 		thread_vector[i].join();
+	}
+
+	// Spawn threads to do the boundary cases of Jacobi relaxation
+	for (int i = 0; i < num_threads; i++) {
+		threads_boundary[i].thread_number = i;
+		thread_boundary_vector[i] = std::thread(performJacobiBoundaryIteration, input, potential, source,
+												V_bound, x_size, y_size, z_size, delta, num_threads,
+												&threads_boundary[i]); // Add thread to vector
+	}
+
+	// Resolve threads once they are finished
+	for (int i = 0; i < num_threads; i++) {
+		thread_boundary_vector[i].join();
 	}
 
 	return NULL;
@@ -304,8 +544,7 @@ void poisson_dirichlet (double * __restrict__ source,
 	}
 
 	// Perform iterations of Jacobi relaxation
-	//input = source; // Copy the source distribution as the input for the first iteration
-	memcpy(input, source, size);
+	memcpy(input, source, size); // Copy the source distribution as the input for the first iteration
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
@@ -320,7 +559,7 @@ void poisson_dirichlet (double * __restrict__ source,
 	}
 	
 	// For checking potential is calculated correctly (DON'T DELETE YET, i'll delete it at the end)
-	/*for (int i=0; i < zsize; i++) {
+	for (int i=0; i < zsize; i++) {
 		for (int j=0; j < ysize; j++) {
 			for (int k=0; k < xsize; k++) {
 				if (k == 0) {
@@ -349,7 +588,7 @@ void poisson_dirichlet (double * __restrict__ source,
 				
 			}
 		}
-	}*/
+	}
 	
 	free(input);
 }
