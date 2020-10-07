@@ -179,12 +179,13 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
 */
 void* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
 							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
-							   double delta, thread_args_t* threads)
+							   double delta)//, thread_args_t* threads)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
-	for (unsigned int z = threads->z_start; z < threads->z_end; z++) { // Iterate through cuboid's x values
-		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's z values
-			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's y values
+	//for (unsigned int z = threads->z_start; z < threads->z_end; z++) { // Iterate through cuboid's z values
+	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's x values
+		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
+			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
 				
 				double res = 0; // Initalise the result for the current voxel to 0
 
@@ -271,7 +272,7 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
  *		- unsigned int num_threads: The number of threads being used.
  * --------------------- 
 */
-void* threadJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+/*void* threadJacobiIteration(double* input, double* potential, double* source, double V_bound, 
 						   unsigned int x_size, unsigned int y_size, unsigned int z_size,
 						   double delta, unsigned int num_threads)
 {
@@ -299,7 +300,7 @@ void* threadJacobiIteration(double* input, double* potential, double* source, do
 	}
 
 	return NULL;
-}
+}*/
 
 
 /*
@@ -351,23 +352,25 @@ void poisson_dirichlet (double * __restrict__ source,
 	}
 
 	// Perform iterations of Jacobi relaxation
-	input = source; // Copy the source distribution as the input for the first iteration
+	//input = source; // Copy the source distribution as the input for the first iteration
+	memcpy(input, source, size);
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
-		threadJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta, num_threads);
-
+		//threadJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta, num_threads);
+		performJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta);
 
 		// Swap pointers to prepare fo the next iteration
-		if (iter != (numiters - 1)) { // If another iteration will occur
+		/*if (iter != (numiters - 1)) { // If another iteration will occur
 			temp = input;
 			input = potential; // Copy the calculated potential as the input for the next iteration
 			potential = temp; // Copy the potential that will be modified to a different address as the input
-		}
+		}*/
+		memcpy(input, potential, size);
 	}
 	
 	// For checking potential is calculated correctly (DON'T DELETE YET, i'll delete it at the end)
-	/*for (int i=0; i < zsize; i++) {
+	for (int i=0; i < zsize; i++) {
 		for (int j=0; j < ysize; j++) {
 			for (int k=0; k < xsize; k++) {
 				if (k == 0) {
@@ -396,7 +399,7 @@ void poisson_dirichlet (double * __restrict__ source,
 				
 			}
 		}
-	}*/
+	}
 	
 
 	free(input);

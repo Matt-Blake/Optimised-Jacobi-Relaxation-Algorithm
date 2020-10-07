@@ -21,8 +21,9 @@
 - Implement profiling properly -> Derrick
 - Implement better threading access -> Matt
 - Look through lecture notes for other optimisations to implement -> Derrick
-- Make sure function is still sussing it properly (check final pointer for memcopy
-  and if it should be < z_end or <= z_end) -> Matt
+- Make sure function is still sussing it properly (memcopy and threading both
+  causing errors. (check final pointer for memcopy and if it should be < z_end
+  or <= z_end) -> Matt
 - delete output check thing at the end -> Matt at end of project
 */
 
