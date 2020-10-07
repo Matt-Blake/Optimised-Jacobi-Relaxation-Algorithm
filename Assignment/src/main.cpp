@@ -17,11 +17,9 @@
 
 
 /* TODO LIST for MATT AND DERRICK
-- Implement profiling properly on Linux -> Derrick
-- Look at the Graphical cache/valgrind output on Linux (look at lab 2) -> Matt or Derrick
-- Should we be sussing 03 or 0fast in the makefile? -> Matt/Derrick
-- Look through lecture notes for other optimisations to implement -> Derrick
+- Make BASH files for testing and report graphics -> Derrick
 - Suss first memcopy -> Matt
+- Look through lecture notes for other optimisations to implement? -> Derrick (hit up network)
 - Fix seg faulting for large and even N -> Matt
 - Make sure function is still sussing it properly (check even and odd etc)
   then delete output results thing and iostream -> Matt at end
