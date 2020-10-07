@@ -555,21 +555,7 @@ void poisson_dirichlet (double * __restrict__ source,
 					std::cout << ']';
 				} else {
 					std::cout << ", ";
-				}
-				//std::cout << "potential ";
-				//std::cout << potential[((k * ysize) + j) * xsize + i];
-				//std::cout << '\n';
-				//std::cout << "z value ";
-				//std::cout << i;
-	    		//std::cout << '\n';
-				//std::cout << "y value ";
-				//std::cout << j;
-	    		//std::cout << '\n';
-				//std::cout << "x value ";
-				//std::cout << k;
-	    		//std::cout << '\n';
-				//std::cout << '\n';
-				
+				}			
 			}
 		}
 	}*/

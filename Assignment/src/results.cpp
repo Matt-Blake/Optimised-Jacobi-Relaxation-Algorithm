@@ -125,7 +125,6 @@ void* calculateResults(poisson_args_t* poisson_args)
     clock_gettime(CLOCK_MONOTONIC, &end); // End timer
     nanoseconds = (double) (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
 	milliseconds = nanoseconds/MS_TO_NS;
-	std::cout << milliseconds << std::endl;
 	result_string = getResultsString(poisson_args, milliseconds); // Convert results to formatted string
 	result_strings.push_back(result_string); // Save results string in a vector
 	saveResultsToCSV(result_strings); // Save all results strings to a .csv file
