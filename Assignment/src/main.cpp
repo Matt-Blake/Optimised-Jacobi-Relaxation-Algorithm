@@ -17,7 +17,6 @@
 
 
 /* TODO LIST for MATT AND DERRICK
-- Debug loop unrolling, then implement threading for it -> Matt
 - Implement profiling properly on Linux -> Derrick
 - Look at the Graphical cache/valgrind output on Linux (look at lab 2) -> Matt or Derrick
 - Should we be sussing 03 or 0fast in the makefile? -> Matt/Derrick
