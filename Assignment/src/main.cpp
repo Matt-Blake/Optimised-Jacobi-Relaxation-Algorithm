@@ -18,10 +18,10 @@
 
 /* TODO LIST for MATT AND DERRICK
 - Make BASH files for testing and report graphics -> Derrick
-- Suss first memcopy -> Matt (hit up network)
-- Look through lecture notes for other optimisations to implement? -> Derrick (hit up network)
-- Make sure function is still sussing it properly (check even and odd etc)
-  then delete output results thing and iostream -> Matt at end
+- Possible: Suss first memcopy -> Matt (hit up network)
+- Possible: Look through lecture notes for other optimisations to implement? -> Derrick (hit up network)
+- At the end: Make sure function is still sussing it properly (check even and odd etc)
+  then delete output results thing and iostream -> Matt
 */
 
 #include <cstdio>
