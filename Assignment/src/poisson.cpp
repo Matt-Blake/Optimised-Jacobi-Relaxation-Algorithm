@@ -182,61 +182,22 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
 							   double delta, unsigned int num_threads, thread_args_t* threads)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
-	for (unsigned int z = threads->thread_number; z < z_size; z+=num_threads) { // Iterate through cuboid's z values
-		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
-			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
+	for (unsigned int z = threads->thread_number; z < (z_size - 1); z+=num_threads) { // Iterate through cuboid's z values
+		for (unsigned int y = 1; y < (y_size - 1); y++) { // Iterate through cuboid's y values
+			for (unsigned int x = 1; x < (x_size - 1); x++) { // Iterate through cuboid's x values
 				
-				double res = 0; // Initalise the result for the current voxel to 0
-
-				// Calculate V[x+1, y, z, iter]
-				if (x < x_size - 1)
-					res += input[((z * y_size) + y) * x_size + (x + 1)];
-					
-				else // Boundary condition
-					res += V_bound;
-
-				// Calculate V[x-1, y, z, iter]
-				if (x > 0)
-					res += input[((z * y_size) + y) * x_size + (x - 1)];
-					
-				else // Boundary condition
-					res += V_bound;
-
-				// Calculate V[x, y+1, z, iter]
-				if (y < y_size - 1)
-					res += input[((z * y_size) + (y + 1)) * x_size + x];
-					
-				else // Boundary condition
-					res += V_bound;
+				double result = 0;
 				
-				// Calculate V[x, y-1, z, iter]
-				if (y > 0)
-					res += input[((z * y_size) + (y - 1)) * x_size + x];
-					
-				else // Boundary condition
-					res += V_bound;
-
-				// Calculate V[x, y, z+1, iter]
-				if (z < z_size - 1)
-					res += input[(((z + 1) * y_size) + y) * x_size + x];
-					
-				else // Boundary condition
-					res += V_bound;
-
-				// Calculate V[x, y, z-1, iter]
-				if (z > 0)
-					res += input[(((z - 1) * y_size) + y) * x_size + x];
-				else // Boundary condition
-					res += V_bound; 
-
-				// Subtract the effect of the source
-				res -= delta * delta * source[((z * y_size) + y) * x_size + x];
-
-				// Divide result by 6 as per Jacobi's relaxation
-				res /= 6;
-			
-				// Store potential result for current voxel
-				potential[((z * y_size) + y) * x_size + x] = res;
+				result += input[((z * y_size) + y) * x_size + (x + 1)]; // V[x+1, y, z]
+				result += input[((z * y_size) + y) * x_size + (x - 1)]; // V[x-1, y, z]
+				result += input[((z * y_size) + (y + 1)) * x_size + x]; // V[x, y+1, z]
+				result += input[((z * y_size) + (y - 1)) * x_size + x]; // V[x, y-1, z]
+				result += input[(((z + 1) * y_size) + y) * x_size + x]; // V[x, y, z+1]
+				result += input[(((z - 1) * y_size) + y) * x_size + x]; // V[x, y, z-1]
+				result -= delta * delta * source[((z * y_size) + y) * x_size + x]; // Subtract the effect of the source
+				result /= 6;
+				
+				potential[((z * y_size) + y) * x_size + x] = result; // Store potential result for current voxel
 			}
 		}
 	}
@@ -280,7 +241,7 @@ void* threadJacobiIteration(double* input, double* potential, double* source, do
 
 	// Spawn thread to do a sub-section of Jacobi relaxation
 	for (int i = 0; i < num_threads; i++) {
-		threads[i].thread_number = i;
+		threads[i].thread_number = i + 1;
 		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, V_bound, x_size,
 										y_size, z_size, delta, num_threads, &threads[i]); // Add thread to vector
 	}
