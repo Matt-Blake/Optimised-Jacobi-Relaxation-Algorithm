@@ -18,11 +18,13 @@
 
 /* TODO LIST for MATT AND DERRICK
 - Implement loop unrolling -> Matt
-- Implement profiling properly -> Derrick
+- Implement profiling properly on Linux -> Derrick
+- Look at the Graphical cache/valgrind output on Linux (look at lab 2) -> Matt or Derrick
+- Look at Lab 4 -> Matt/Derrick
 - Look through lecture notes for other optimisations to implement -> Derrick
 - Suss first memcopy -> Matt
-- delete output check thing at the end -> Matt at end of project
-- Make sure function is still sussing it properly (check even and odd etc) -> Matt at end
+- Make sure function is still sussing it properly (check even and odd etc)
+  then delete output results thing and iostream -> Matt at end
 */
 
 #include <cstdio>

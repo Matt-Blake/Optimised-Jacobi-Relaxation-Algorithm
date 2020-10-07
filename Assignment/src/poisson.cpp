@@ -49,6 +49,7 @@ typedef class thread_args
         unsigned int thread_number;
 } thread_args_t;
 
+
 /*
  * Function:    poisson_args_t::allocateUserInputs
  * ------------------------------
