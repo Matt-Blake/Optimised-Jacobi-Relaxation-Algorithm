@@ -27,6 +27,7 @@
 #define CSV_HEADER_STRING		  "Size,Iterations,Time Taken (ns)\n" // A str//ing containing the header text for the .csv results file
 #define MAX_STRING_SIZE			  100				// The maximum number of chars to be stored in a string (doesn't include '\0')
 #define S_TO_NS 			  	  1000000000ULL 	// Conversion factor from seconds to nanoseconds
+#define MS_TO_NS				  1000000 			// Conversion factor from milliseconds to nanoseconds
 
 
 /*
@@ -76,7 +77,7 @@ static void* saveResultsToCSV(std::vector<std::string> output_strings)
  * 		- std::string: A string containing the results.
  * ---------------------
  */
-std::string getResultsString(poisson_args_t* poisson_args, uint64_t nanoseconds)
+std::string getResultsString(poisson_args_t* poisson_args, double nanoseconds)
 {
 	static 
 	std::string size_string;
@@ -111,7 +112,8 @@ std::string getResultsString(poisson_args_t* poisson_args, uint64_t nanoseconds)
 void* calculateResults(poisson_args_t* poisson_args)
 {
 	struct timespec start, end;
-    uint64_t nanoseconds;
+    double nanoseconds;
+	double milliseconds;
 	std::string result_string;
 	std::vector<std::string> result_strings;
 
@@ -121,8 +123,10 @@ void* calculateResults(poisson_args_t* poisson_args)
 					  poisson_args->y_size, poisson_args->z_size, poisson_args->delta, poisson_args->num_iters,
 					  poisson_args->num_cores); // Solve Poisson's equation based on arguments
     clock_gettime(CLOCK_MONOTONIC, &end); // End timer
-    nanoseconds = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
-	result_string = getResultsString(poisson_args, nanoseconds); // Convert results to formatted string
+    nanoseconds = (double) (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec); // Calculate time taken
+	milliseconds = nanoseconds/MS_TO_NS;
+	std::cout << milliseconds << std::endl;
+	result_string = getResultsString(poisson_args, milliseconds); // Convert results to formatted string
 	result_strings.push_back(result_string); // Save results string in a vector
 	saveResultsToCSV(result_strings); // Save all results strings to a .csv file
 

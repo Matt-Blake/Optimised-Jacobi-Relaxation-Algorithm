@@ -543,7 +543,7 @@ void poisson_dirichlet (double * __restrict__ source,
 	}
 	
 	// For checking potential is calculated correctly (DON'T DELETE YET, i'll delete it at the end)
-	for (int i=0; i < zsize; i++) {
+	/*for (int i=0; i < zsize; i++) {
 		for (int j=0; j < ysize; j++) {
 			for (int k=0; k < xsize; k++) {
 				if (k == 0) {
@@ -572,7 +572,7 @@ void poisson_dirichlet (double * __restrict__ source,
 				
 			}
 		}
-	}
+	}*/
 	
 	free(input);
 }
