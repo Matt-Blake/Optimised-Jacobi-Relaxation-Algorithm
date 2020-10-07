@@ -40,15 +40,13 @@
  * 
  * 
  * @members:
-        - unsigned int z_start: The z-axis value to start iterating from.
-        - unsigned int z_end: The z-axis value to iterate to.
+        - unsigned int thread_number: A number corresponding to the thread
  * ---------------------
  */
 typedef class thread_args
 {
     public:
-        unsigned int z_start;
-        unsigned int z_end;
+        unsigned int thread_number;
 } thread_args_t;
 
 /*
@@ -173,17 +171,17 @@ void* poisson_args_t::initPoissonArgs(int argc, char** argv)
  * 		- unsigned int y_size: The number of y-axis elements.
  * 		- unsigned int z_size: The number of z-axis elements.
  *		- double delta: The spacing between voxels.
+ *		- unsigned int num_threads: The number of threads being used.
  *		- thread_args_t* threads: A pointer to the start and finishing z-axis
 								  values iterated through by this thread.
  * --------------------- 
 */
 void* performJacobiIteration(double* input, double* potential, double* source, double V_bound, 
 							   unsigned int x_size, unsigned int y_size, unsigned int z_size,
-							   double delta)//, thread_args_t* threads)
+							   double delta, unsigned int num_threads, thread_args_t* threads)
 {
 	// Iterate through each voxel, calculating the potential via Jacobi's relaxation
-	//for (unsigned int z = threads->z_start; z < threads->z_end; z++) { // Iterate through cuboid's z values
-	for (unsigned int z = 0; z < z_size; z++) { // Iterate through cuboid's x values
+	for (unsigned int z = threads->thread_number; z < z_size; z+=num_threads) { // Iterate through cuboid's z values
 		for (unsigned int y = 0; y < y_size; y++) { // Iterate through cuboid's y values
 			for (unsigned int x = 0; x < x_size; x++) { // Iterate through cuboid's x values
 				
@@ -272,26 +270,18 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
  *		- unsigned int num_threads: The number of threads being used.
  * --------------------- 
 */
-/*void* threadJacobiIteration(double* input, double* potential, double* source, double V_bound, 
+void* threadJacobiIteration(double* input, double* potential, double* source, double V_bound, 
 						   unsigned int x_size, unsigned int y_size, unsigned int z_size,
 						   double delta, unsigned int num_threads)
 {
 	thread_args_t threads[num_threads]; // Create an array of thread argument structs
 	std::vector<std::thread> thread_vector(num_threads);
 
+	// Spawn thread to do a sub-section of Jacobi relaxation
 	for (int i = 0; i < num_threads; i++) {
-
-		// Split up z-axis values for each thread
-		threads[i].z_start = i * z_size / num_threads;
-		if (i != (num_threads - 1)) {
-			threads[i].z_end = ((i + 1) * z_size / num_threads) - 1;
-		} else { // For the final thread the end value should be the last z-axis value
-			threads[i].z_end = z_size;
-		}
-
-		// Spawn thread to do a sub-section of Jacobi relaxation
+		threads[i].thread_number = i;
 		thread_vector[i] = std::thread(performJacobiIteration, input, potential, source, V_bound, x_size,
-										y_size, z_size, delta, &threads[i]); // Add thread to vector
+										y_size, z_size, delta, num_threads, &threads[i]); // Add thread to vector
 	}
 	
 	// Resolve threads once they are finished
@@ -300,7 +290,7 @@ void* performJacobiIteration(double* input, double* potential, double* source, d
 	}
 
 	return NULL;
-}*/
+}
 
 
 /*
@@ -357,20 +347,18 @@ void poisson_dirichlet (double * __restrict__ source,
 	for (unsigned int iter = 0; iter < numiters; iter++) {
 		
 		// Split up the z-axis values and spawn the threads to do an iteration of Jacobi relaxation
-		//threadJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta, num_threads);
-		performJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta);
+		threadJacobiIteration(input, potential, source, Vbound, xsize, ysize, zsize, delta, num_threads);
 
 		// Swap pointers to prepare fo the next iteration
-		/*if (iter != (numiters - 1)) { // If another iteration will occur
+		if (iter != (numiters - 1)) { // If another iteration will occur
 			temp = input;
 			input = potential; // Copy the calculated potential as the input for the next iteration
 			potential = temp; // Copy the potential that will be modified to a different address as the input
-		}*/
-		memcpy(input, potential, size);
+		}
 	}
 	
 	// For checking potential is calculated correctly (DON'T DELETE YET, i'll delete it at the end)
-	for (int i=0; i < zsize; i++) {
+	/*for (int i=0; i < zsize; i++) {
 		for (int j=0; j < ysize; j++) {
 			for (int k=0; k < xsize; k++) {
 				if (k == 0) {
@@ -399,8 +387,7 @@ void poisson_dirichlet (double * __restrict__ source,
 				
 			}
 		}
-	}
+	}*/
 	
-
 	free(input);
 }
