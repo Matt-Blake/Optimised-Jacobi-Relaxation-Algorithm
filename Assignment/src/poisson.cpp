@@ -30,7 +30,6 @@
 #define ERROR_SYMBOL        1       // The value to return if an error occurs
 #define THREADS_PER_CORE	1		// The number of threads to use per core (optimal performance at 1)
 
-
 /*
  * Function:    poisson_args_t::allocateUserInputs
  * ------------------------------

@@ -83,15 +83,18 @@ std::string getResultsString(poisson_args_t* poisson_args, double nanoseconds)
 	std::string size_string;
 	std::string iterations_string;
 	std::string time_string;
+	std::string cores_string;
 	std::string result_string;
 
 	// Convert results to strings
 	size_string = std::to_string(poisson_args->x_size);
 	iterations_string = std::to_string(poisson_args->num_iters);
 	time_string = std::to_string(nanoseconds);
+	cores_string = std::to_string(poisson_args->num_cores);
+	
 
 	// Save result
-	result_string = size_string + ',' + iterations_string + ',' + time_string + '\n';
+	result_string = size_string + ',' + iterations_string + ',' + cores_string + ',' + time_string + '\n';
 
 	return result_string;
 
