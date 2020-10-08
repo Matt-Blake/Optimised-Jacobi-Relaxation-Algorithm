@@ -8,9 +8,9 @@ make clean
 make all
 break>thread_output.txt
 
-for x in 101 501 901
+for x in 101 201 301 401 501 601 701 801 901
 do
-	for i in {1..10}
+	for i in {1..8}
 	do
 		for j in {1..10}
 			do
@@ -18,4 +18,3 @@ do
 			done
 	done
 done
-
