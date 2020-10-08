@@ -22,8 +22,6 @@
 #include <vector>
 #include "poisson.hpp"
 
-#include <iostream>
-
 #define VOXEL_SPACING       0.1     // The spacing (in all directions) between voxels (meters)
 #define V_BOUND             0       // Voltage potential on the box boundary
 #define CHARGE_VALUE        1       // The value of a point charge in the charge distribution
@@ -537,27 +535,9 @@ void poisson_dirichlet (double * __restrict__ source,
 		if (iter != (numiters - 1)) { // If another iteration will occur
 			temp = input;
 			input = potential; // Copy the calculated potential as the input for the next iteration
-			potential = temp; // Copy the potential that will be modified to a different address as the input
+			potential = temp;   // Copy the potential that will be modified to a different address as the input
 		}
 	}
-	
-	// For checking potential is calculated correctly (DON'T DELETE YET, i'll delete it at the end)
-	/*for (int i=0; i < zsize; i++) {
-		for (int j=0; j < ysize; j++) {
-			for (int k=0; k < xsize; k++) {
-				if (k == 0) {
-					std::cout << '[';
-				} 
-				std::cout << potential[((k * ysize) + j) * xsize + i];
-				
-				if (k == (xsize - 1)) {
-					std::cout << ']';
-				} else {
-					std::cout << ", ";
-				}			
-			}
-		}
-	}*/
 	
 	free(input);
 }

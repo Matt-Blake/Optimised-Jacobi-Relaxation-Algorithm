@@ -15,15 +15,6 @@
  * Last modified: 08/10/2020
  * ***************************************************************/
 
-
-/* TODO LIST for MATT AND DERRICK
-- Make BASH files for testing and report graphics -> Derrick
-- Possible: Suss first memcopy -> Matt (hit up network)
-- Possible: Look through lecture notes for other optimisations to implement? -> Derrick (hit up network)
-- At the end: Make sure function is still sussing it properly (check even and odd etc)
-  then delete output results thing and iostream -> Matt
-*/
-
 #include <cstdio>
 #include <cstdlib>
 #include "poisson.hpp"

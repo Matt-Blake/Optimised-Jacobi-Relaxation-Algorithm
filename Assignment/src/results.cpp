@@ -97,7 +97,6 @@ std::string getResultsString(poisson_args_t* poisson_args, double nanoseconds)
 	result_string = size_string + ',' + iterations_string + ',' + cores_string + ',' + time_string + '\n';
 
 	return result_string;
-
 }
 
 
