@@ -1,8 +1,0 @@
-CFLAGS=-g -Wall -pipe -O3
-LFLAGS=-lpthread
-
-sum: sum.cpp
-	$(CC) -o $@ $< $(CFLAGS) $(LFLAGS)
-
-clean:
-	rm -f sum
