@@ -11,7 +11,7 @@
  * ENCE464 Assignment 2 Group 1
  * Creators: Matt Blake          58979250
  *           Derrick Edward      18017758
- * Last modified: 03/10/2020
+ * Last modified: 19/10/2020
  * ***************************************************************/
 
 #include <cstdio>
@@ -71,13 +71,12 @@ static void* saveResultsToCSV(std::vector<std::string> output_strings)
  * @params:
  *      - poisson_args_t* poisson_args: The arguments needed to solve
  * 					      				Poisson's equation.
- * 		- uint64_t nanoseconds: The time taken to solve Poisson's
- * 								equation (in ns).
+ * 		- uint64_t time: The time taken to solve Poisson's equation.
  * @returns:
  * 		- std::string: A string containing the results.
  * ---------------------
  */
-std::string getResultsString(poisson_args_t* poisson_args, double nanoseconds)
+std::string getResultsString(poisson_args_t* poisson_args, double time)
 {
 	static 
 	std::string size_string;
@@ -89,7 +88,7 @@ std::string getResultsString(poisson_args_t* poisson_args, double nanoseconds)
 	// Convert results to strings
 	size_string = std::to_string(poisson_args->x_size);
 	iterations_string = std::to_string(poisson_args->num_iters);
-	time_string = std::to_string(nanoseconds);
+	time_string = std::to_string(time);
 	cores_string = std::to_string(poisson_args->num_cores);
 	
 
